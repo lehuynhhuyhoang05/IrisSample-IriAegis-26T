@@ -1,5 +1,9 @@
 # IriAegis Web — Giao diện và prototype nghiệp vụ
 
+**Liveness nhóm 4:** [TICH-HOP-LIVENESS-NHOM-4.md](TICH-HOP-LIVENESS-NHOM-4.md). Đã chuyển luồng Android sang Web: chớp mắt → quay hai phía → đo flash đỏ/xanh → API MiniVision. Thử tại `/#/camera` hoặc bước điểm danh. Backend nhóm 4 chạy cổng 8000, proxy `/liveness-api`. Cần thử camera/iPhone thật để xác nhận chất lượng; chưa có đối sánh danh tính hoặc bằng chứng do server nhóm 1 xác minh.
+
+**Tình huống iPhone người thật không đạt flash:** [báo cáo và hướng thu số đo](BAO-CAO-LIVENESS-IOS.md). Hiện chưa xác nhận khắc phục trên thiết bị thật. Sau bước ánh sáng có thể tải JSON số đo trong Thông tin kiểm tra; công thức/ngưỡng nhóm 4 không bị nới để cho qua.
+
 **Đối chiếu API mới nhất:** [DOI-CHIEU-API-SERVER.md](DOI-CHIEU-API-SERVER.md) — ma trận 38 operation Web, các phần thiếu đã bổ sung, giới hạn và mâu thuẫn trong YAML. Chạy `npm.cmd run audit:api` để xem ma trận.
 
 Rà soát mới nhất: [Đối chiếu chức năng Android → Web](DOI-CHIEU-ANDROID-WEB.md). Bảng này phân biệt chức năng đã có, còn thiếu, giả lập và các khác biệt nghiệp vụ; bản demo chưa tương đương hoàn toàn với Android. Quy chuẩn hình thức và mobile: [DESIGN.md](DESIGN.md).
@@ -8,7 +12,7 @@ Rà soát mới nhất: [Đối chiếu chức năng Android → Web](DOI-CHIEU-
 
 Trang `/` hoặc `/#/app` mặc định mở đăng nhập server. Dùng tài khoản nhóm 1 cấp. Hướng dẫn cấu hình, kết quả rà soát UX, endpoint đã nối và các lệch giữa YAML/source: [DANH-GIA-UX-VA-TICH-HOP-SERVER.md](DANH-GIA-UX-VA-TICH-HOP-SERVER.md).
 
-Trình duyệt gọi `/api/v1` qua proxy Vite; đích mặc định `http://localhost:5000` lấy từ YAML. Có thể tạo `.env.local` từ `.env.example`, đổi `API_PROXY_TARGET` rồi khởi động lại Vite. Trên điện thoại/tunnel nên giữ API cùng origin. Đặc tả có endpoint planned, chưa có API đối sánh mặt/liveness; Web không tự chuyển thành kết quả giả lập khi server lỗi. Đã chuẩn bị request thật, chưa xác nhận hoạt động với backend thật đang chạy.
+Trình duyệt gọi `/api/v1` qua proxy Vite; đích mặc định `http://localhost:5000` lấy từ YAML. Có thể tạo `.env.local` từ `.env.example`, đổi `API_PROXY_TARGET` rồi khởi động lại Vite. Trên điện thoại/tunnel nên giữ API cùng origin. Đặc tả nhóm 1 có endpoint planned, chưa có đối sánh mặt hoặc liên kết bằng chứng liveness vào check-in; liveness chạy qua API riêng nhóm 4. Web không tự chuyển thành kết quả giả lập khi server lỗi. Chưa xác nhận hoạt động với backend nhóm 1 thật đang chạy.
 
 ## Dữ liệu mẫu và các luồng Android chờ API
 
@@ -24,7 +28,7 @@ Bộ mẫu dùng dữ liệu giả trong bộ nhớ; không phải bản ứng d
 
 ## Prototype camera
 
-Prototype React/Vite mở camera, chụp ảnh và phát hiện khuôn mặt bằng MediaPipe. Phát hiện mặt không phải xác minh danh tính hoặc chống giả mạo.
+`/#/camera` mở luồng liveness đầy đủ được chuyển từ nhóm 4; `/#/camera/passive` thử riêng API phân loại một ảnh. Phát hiện mặt và kết quả liveness không phải xác minh danh tính.
 
 Camera đã dùng `navigator.mediaDevices.getUserMedia()` để lấy `MediaStream`, theo phần truy cập thiết bị của bộ công nghệ WebRTC. Luồng được gắn vào `<video playsInline>` và chụp qua `canvas`; MediaPipe là thành phần riêng để phát hiện khuôn mặt. Xem [hướng dẫn WebRTC về media devices](https://webrtc.org/getting-started/media-devices).
 
@@ -39,9 +43,9 @@ npm.cmd install
 npm.cmd run dev
 ```
 
-Chạy `npm.cmd test` để kiểm tra logic vùng cắt ảnh.
+Chạy `npm.cmd test` để kiểm tra logic vùng cắt ảnh, hợp đồng API và luồng liveness.
 
-Mở địa chỉ localhost được in trong terminal, bấm **Bật camera** và cho phép trình duyệt sử dụng webcam. `npm.cmd run build` tạo bản build. Dùng `npm.cmd` trong PowerShell để tránh lỗi chặn `npm.ps1` theo execution policy. Lần đầu mở camera cần mạng để tải model và WebAssembly từ CDN của MediaPipe; lỗi tải sẽ được hiển thị và không ngăn chụp ảnh.
+Mở địa chỉ localhost được in trong terminal. Tại `/#/camera`, đọc và chọn đồng ý đo ánh sáng/gửi ảnh, bấm **Bắt đầu xác thực**, rồi cho phép trình duyệt sử dụng webcam. Giữ mắt mở để hiệu chuẩn, chớp mắt, quay chậm hai phía và nhìn thẳng để đo đỏ/xanh. `npm.cmd run build` tạo bản build. Dùng `npm.cmd` trong PowerShell để tránh lỗi chặn `npm.ps1` theo execution policy. Lần đầu mở camera cần mạng để tải WASM MediaPipe; model landmark nằm trong `public/models/group4`. Với luồng liveness phải phát hiện đúng một mặt và dịch vụ nhóm 4 phải hoạt động; lỗi hoặc FAKE không cho sử dụng ảnh. Hướng dẫn khởi chạy backend và kiểm thử nằm trong [tài liệu tích hợp](TICH-HOP-LIVENESS-NHOM-4.md).
 
 ## Kiểm thử trên điện thoại
 
@@ -58,7 +62,7 @@ npm.cmd run test:webkit
 
 Cấu hình riêng `playwright.webkit.config.js` dùng thiết bị mô phỏng iPhone 13; các test Chrome mặc định vẫn ở `npm.cmd run test:ui`. Test WebKit không xác nhận thay cho thiết bị iPhone thật.
 
-Máy hiện tại đã khởi chạy WebKit và chạy đạt 14/14 bài test với cấu hình iPhone 13. Trước đó Smart App Control/Code Integrity chặn `WebKit2.dll` (sự kiện 3077 và 3118); sau khi người dùng thay đổi thiết lập Windows, lỗi khởi động không còn. Có sửa quản lý focus của Button/Dialog để đóng hộp thoại trả focus đúng trên WebKit.
+Máy hiện tại đã chạy được WebKit với cấu hình iPhone 13. Lần kiểm tra liveness ngày 15/11/2026 sau sửa watchdog/nguồn frame đạt 17/17 bài trên WebKit; kết quả và phạm vi mô phỏng được ghi trong [tài liệu tích hợp](TICH-HOP-LIVENESS-NHOM-4.md). Trước đó Smart App Control/Code Integrity chặn `WebKit2.dll` (sự kiện 3077 và 3118); sau khi người dùng thay đổi thiết lập Windows, lỗi khởi động không còn. Có sửa quản lý focus của Button/Dialog để đóng hộp thoại trả focus đúng trên WebKit.
 
 Muốn nhìn cửa sổ WebKit trong lúc test:
 

@@ -165,7 +165,9 @@ Màn hình này phải được render trong `AppShell`. `required` diễn đạ
 
 ## 6. Camera và trạng thái nghiệp vụ
 
-Camera ở `App.jsx`, truy cập `/#/camera`; có thể nhúng bằng `<CameraApp embedded onCapture={handlePhoto} />`. Callback nhận JPEG data URL khi người dùng bấm Sử dụng ảnh này. Khung oval, crop và xử lý Safari của prototype được giữ lại. Không tự mở một camera thứ hai trong màn hình nghiệp vụ. `portal/shared.jsx` có `PhotoField` và `FaceFlow` dùng lại camera; FaceFlow chỉ điều phối kết quả giả lập. API và liveness thật chưa tích hợp; xem `BAN-GIAO-FRONTEND.md` trước khi thay controller camera.
+Cập nhật Nhóm 4: đọc [TICH-HOP-LIVENESS-NHOM-4.md](TICH-HOP-LIVENESS-NHOM-4.md). `<CameraApp embedded livenessRequired onCapture={(image, result) => ...} />` chạy `FullLivenessCamera`: chớp mắt/quay đầu/flash chuyển từ Android nhóm 4, sau đó gọi MiniVision nhóm 4. Callback chỉ mở khi các lớp chủ động và phản xạ đạt, API trả REAL và người dùng chọn dùng ảnh. Không dùng REAL làm đối sánh danh tính hoặc tự thêm trường vào API nhóm 1. Trang `/#/camera/passive` chỉ để thử riêng API, không dùng `passiveOnly` tại màn nghiệp vụ.
+
+Camera ở `App.jsx`, truy cập `/#/camera`; nhúng bằng `<CameraApp embedded livenessRequired onCapture={handlePhoto} />` cho luồng cần chống giả. Callback nhận JPEG data URL và phản hồi nhóm 4 khi người dùng bấm Sử dụng ảnh này. Khung oval, crop và xử lý Safari của prototype được giữ lại. Không tự mở một camera thứ hai trong màn hình nghiệp vụ. `portal/shared.jsx` có `PhotoField` và `FaceFlow` dùng lại camera; FaceFlow gọi liveness nhóm 4 khi chụp, còn đối sánh danh tính và ghi nhận demo vẫn là giả lập. Chỉ bỏ `livenessRequired` khi màn hình được xác định là chụp ảnh thông thường.
 
 Phải phân biệt “Đã phát hiện khuôn mặt”, “Đã đăng ký ảnh”, “Liveness thành công” và “Điểm danh thành công”. Đây là bốn ý nghĩa khác nhau. Không dùng trạng thái detector hiện tại làm kết quả xác thực. Dữ liệu mẫu phải có nhãn rõ.
 
