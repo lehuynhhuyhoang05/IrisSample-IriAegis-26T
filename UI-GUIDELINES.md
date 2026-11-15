@@ -2,6 +2,10 @@
 
 Phiên bản nền 0.1 · Trưởng nhóm duy trì · Áp dụng cho các màn hình Web tuần 2.
 
+**Cập nhật kết nối nhóm 1:** `/#/app` hiện mặc định dùng server; bản mock mở qua “Mở dữ liệu mẫu” ở đăng nhập. Thành viên đọc [rà soát UX và tích hợp server](DANH-GIA-UX-VA-TICH-HOP-SERVER.md), dùng `src/server/client.js`, hook tải dữ liệu và component chung khi phát triển. Không lấy password/vector từ localStorage để xác thực server và không dùng kết quả mock làm liveness thật.
+
+**Quy chuẩn giao diện nghiệp vụ cập nhật:** đọc `DESIGN.md` và `AGENTS.md`. Portal dùng `src/portal/PortalShell.jsx`: trên mobile header gọn và tabbar dưới, menu phụ ở “Thêm”; từ 768px có sidebar. Các mô tả `AppShell` và breakpoint UI kit trong tài liệu này là mẫu thư viện, không thay thế bố cục portal. CSS sản phẩm nằm ở `src/portal/mobile-first.css`, nạp sau CSS nền. Không thêm đoạn giải thích dưới mọi tiêu đề hoặc đưa nguyên menu desktop lên đầu mobile.
+
 ## 1. Mở bộ mẫu
 
 Source bàn giao nằm trên nhánh `HuyHoang`. Máy mới cần Node.js 22 và Git; Chrome cần thiết khi chạy test giao diện. Clone đúng nhánh:
@@ -28,7 +32,8 @@ Lấy địa chỉ Vite in trong terminal và thêm `/#/ui-kit`:
 - `/#/ui-kit/components`: các component và trạng thái có thể thử trực tiếp.
 - `/#/ui-kit/foundation`: bảng màu, typography, khoảng cách, icon và responsive.
 - `/#/ui-kit/guide`: hướng dẫn triển khai ngắn.
-- `/` hoặc `/#/camera`: prototype camera gốc.
+- `/#/camera`: prototype camera gốc.
+- `/` hoặc `/#/app`: bản nghiệp vụ demo; xem [bàn giao frontend](BAN-GIAO-FRONTEND.md) để biết tài khoản, phạm vi và các điểm tích hợp.
 
 Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu giả nằm trong state và có thể mất khi chuyển trang hoặc tải lại. Mẫu không triển khai đầy đủ nghiệp vụ sinh viên, quan hệ nhiều môn, phân quyền hay đối sánh khuôn mặt; không dùng nó làm đặc tả API. Không nhập thông tin thật.
 
@@ -39,7 +44,7 @@ Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu 
 - `app/src/main/res/values/colors.xml`: mint `#66CFCF`, chữ chính `#263238`, bề mặt trắng và các nhóm màu trạng thái.
 - `styles.xml`: phân cấp nút chính/phụ/xóa, form có nhãn và các kích thước tham khảo. Không chuyển dp/sp sang CSS một cách tuyệt đối.
 - `activity_student_list.xml`: danh sách sinh viên, tìm kiếm, hành động thêm và xuất dữ liệu làm cơ sở cho màn hình tham chiếu.
-- `ic_app_logo.png`: sử dụng logo nguyên bản. Icon thao tác dùng Lucide đã có trong project để giữ một nét vẽ thống nhất. Các SVG Android khác vẫn nằm trong source camera nhưng không bắt buộc chèn vào mọi màn hình.
+- `ic_app_logo.png`: sử dụng logo nguyên bản. Icon thao tác dùng Phosphor, import qua `src/ui/icons.js` để giữ một hệ icon thống nhất. Các SVG Android khác vẫn nằm trong source camera nhưng không bắt buộc chèn vào mọi màn hình.
 
 ### Điều chỉnh cho Web
 
@@ -47,7 +52,7 @@ Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu 
 - Font hệ thống: `-apple-system`, `BlinkMacSystemFont`, `Segoe UI`, `sans-serif`. Không giả định Android có một font thương hiệu đã thống nhất.
 - Nền trắng hoặc xám rất nhạt, đường phân cách rõ. Không dùng gradient trang trí, nền phát sáng, hero lớn hoặc các card KPI không liên quan công việc.
 - Một vùng chính cho một tác vụ. Không bọc mọi đoạn nội dung bằng card và không lồng card chỉ để trang trí.
-- Không dùng emoji thay icon chức năng. Icon cỡ 18–20 px, nét 2 px, đi cùng chữ nếu ý nghĩa không rõ.
+- Không dùng emoji thay icon chức năng. Icon cỡ 18–20 px, `weight="regular"`, đi cùng chữ nếu ý nghĩa không rõ.
 - Câu chữ ngắn, đúng hành động: “Thêm sinh viên”, “Lưu môn học”, “Giữ lại”. Không dùng “Tiếp tục” cho mọi nút nếu người dùng cần biết thao tác cụ thể.
 
 ## 3. Cấu trúc và quyền sở hữu file
@@ -62,7 +67,8 @@ src/
     AppShell.jsx         # Khung navigation/header/nội dung
     index.js             # Điểm import component
   showcase/              # Ví dụ thao tác và các trang hướng dẫn trực quan
-  Workspace.jsx          # Chọn camera hoặc UI kit bằng hash; không phải router nghiệp vụ
+  portal/                # Các màn nghiệp vụ và domain/store giả lập
+  Workspace.jsx          # Chọn portal, camera hoặc UI kit bằng hash
   App.jsx                # Camera hiện tại, giữ cơ chế MediaStream/MediaPipe
 tests/ui/                # Kiểm thử UI kit bằng trình duyệt
 ```
@@ -114,7 +120,7 @@ Trong UI kit hiện tại, các import này đã được xử lý bởi `main.j
 | `LoadingState` | `label` | Nội dung đang tải có `role="status"`. |
 | `PageHeader` | `eyebrow`, `title`, `description`, `actions` | Mỗi trang một `h1`; eyebrow không bắt buộc. |
 | `Dialog` | `open`, `onClose`, `title`, `description`, `children`, `footer` | Native `<dialog>`, đóng bằng Escape/nút; Tab/Shift+Tab trong hộp thoại; không đóng khi bấm nền để tránh mất form. |
-| `DataTable` | `caption`, `columns`, `rows`, `rowKey`, `empty` | `columns: [{key, label, render?}]`, `rowKey` mặc định `id`, phải duy nhất. Render nhận cả row. Cột đầu là thông tin chính trên mobile. |
+| `DataTable` | `caption`, `columns`, `rows`, `rowKey`, `empty`, `variant` | `columns: [{key, label, render?}]`, `rowKey` mặc định `id`, phải duy nhất. Render nhận cả row. Cột đầu là thông tin chính trên mobile. |
 | `AppShell` | `items`, `activeId`, `children`, `brandSubtitle`, `navigationLabel`, `context`, `badge`, `footer` | Item có `{id, href, label, icon}`. Nhãn mặc định dành cho thư viện; truyền nội dung tương ứng khi dựng màn nghiệp vụ, không sửa cứng component. `footer={null}` ẩn nội dung footer mẫu. |
 
 ### Form hoàn chỉnh tối thiểu
@@ -159,7 +165,7 @@ Màn hình này phải được render trong `AppShell`. `required` diễn đạ
 
 ## 6. Camera và trạng thái nghiệp vụ
 
-Camera vẫn ở `App.jsx`, truy cập `/` hoặc `/#/camera`. Khung oval, crop và xử lý Safari của prototype được giữ lại. Không tự mở một camera thứ hai trong màn hình nghiệp vụ. Việc tách camera thành component trả ảnh/callback sẽ được phối hợp với người phụ trách camera/liveness; bộ nền UI này chưa thực hiện tích hợp liveness hay API.
+Camera ở `App.jsx`, truy cập `/#/camera`; có thể nhúng bằng `<CameraApp embedded onCapture={handlePhoto} />`. Callback nhận JPEG data URL khi người dùng bấm Sử dụng ảnh này. Khung oval, crop và xử lý Safari của prototype được giữ lại. Không tự mở một camera thứ hai trong màn hình nghiệp vụ. `portal/shared.jsx` có `PhotoField` và `FaceFlow` dùng lại camera; FaceFlow chỉ điều phối kết quả giả lập. API và liveness thật chưa tích hợp; xem `BAN-GIAO-FRONTEND.md` trước khi thay controller camera.
 
 Phải phân biệt “Đã phát hiện khuôn mặt”, “Đã đăng ký ảnh”, “Liveness thành công” và “Điểm danh thành công”. Đây là bốn ý nghĩa khác nhau. Không dùng trạng thái detector hiện tại làm kết quả xác thực. Dữ liệu mẫu phải có nhãn rõ.
 
@@ -191,6 +197,7 @@ Phải phân biệt “Đã phát hiện khuôn mặt”, “Đã đăng ký ả
 - Playwright chạy Chrome cài trên máy ở 1440×1000 và 390×844: tìm kiếm/lọc/rỗng, validation/mã trùng, thêm/sửa/xóa, cancel, focus modal/Escape, tải CSV, chuyển về camera, kiểm tra không tràn ngang và không có lỗi runtime ở bốn trang mẫu.
 - Đã xem ảnh chụp desktop và mobile để kiểm tra bố cục.
 - Chưa kiểm thử giao diện mới trên Safari iPhone hoặc Android thật, chưa kiểm tra đầy đủ bằng screen reader; chưa xác nhận camera phần cứng trong test này.
+- Bổ sung kiểm thử WebKit với cấu hình iPhone 13: 14/14 bài đạt. Đã sửa Button/Dialog để ghi nhận và khôi phục focus khi đóng modal trên WebKit. Chạy bằng `npm.cmd run test:webkit`; kiểm thử này vẫn là mô phỏng, không phải iPhone vật lý.
 
 Chạy lại bằng Chrome đã cài:
 
@@ -201,3 +208,14 @@ npm.cmd run build
 ```
 
 Playwright tự mở Vite ở cổng 5187 và dừng server đó khi xong; cổng phải trống. Ảnh và trace nằm trong `test-results/` được gitignore. Cấu hình bot không được triển khai hoặc thay đổi thêm trong nhiệm vụ bộ nền giao diện này.
+
+## Cập nhật đối chiếu Android
+
+Đọc [DOI-CHIEU-ANDROID-WEB.md](DOI-CHIEU-ANDROID-WEB.md) trước khi bổ sung nghiệp vụ. Không dùng màn demo làm đặc tả backend. Danh sách portal dùng `DataTable variant="catalog students"` hoặc `catalog courses` để áp dụng hàng gọn trên mobile. Tên bản ghi mở chi tiết; không thêm nút mũi tên trùng chức năng.
+
+```jsx
+import { Plus, Edit2 } from '../ui/icons'
+import { Button } from '../ui'
+// Tên export là alias chung; không import lại Lucide ở màn riêng.
+<Button icon={Plus} onClick={openForm}>Thêm sinh viên</Button>
+```
