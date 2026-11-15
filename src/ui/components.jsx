@@ -1,8 +1,13 @@
 import { useEffect, useId, useRef } from 'react'
 import { AlertCircle, CheckCircle2, Info, LoaderCircle, Search, X } from './icons'
 
-export function Button({ variant = 'primary', icon: Icon, busy = false, disabled, children, className = '', type = 'button', ...props }) {
-  return <button {...props} type={type} disabled={disabled || busy} aria-busy={busy || undefined} className={`ui-button ui-button--${variant} ${className}`}>
+export function Button({ variant = 'primary', icon: Icon, busy = false, disabled, children, className = '', type = 'button', onClick, ...props }) {
+  return <button {...props} type={type} onClick={event => {
+    // WebKit touch/click does not always focus a button. Focus before opening a
+    // modal so its return target is the actual control, rather than the body.
+    event.currentTarget.focus({ preventScroll: true })
+    onClick?.(event)
+  }} disabled={disabled || busy} aria-busy={busy || undefined} className={`ui-button ui-button--${variant} ${className}`}>
     {busy ? <LoaderCircle className="ui-spin" size={18} aria-hidden="true" /> : Icon && <Icon size={18} aria-hidden="true" />}
     {children}
   </button>
@@ -61,6 +66,7 @@ export function Dialog({ open, onClose, title, description, children, footer }) 
   const id = useId()
   useEffect(() => {
     const dialog = ref.current
+    const returnTarget = document.activeElement
     if (open && !dialog.open) {
       dialog.showModal()
       dialog.querySelector('[data-ui-autofocus]')?.focus()
@@ -72,6 +78,7 @@ export function Dialog({ open, onClose, title, description, children, footer }) 
     return () => {
       document.body.style.overflow = previousOverflow
       if (dialog.open) dialog.close()
+      if (returnTarget?.isConnected && returnTarget !== document.body && !dialog.contains(returnTarget)) returnTarget.focus({ preventScroll: true })
     }
   }, [open])
   function handleKeyDown(event) {
@@ -90,7 +97,7 @@ export function Dialog({ open, onClose, title, description, children, footer }) 
   </dialog>
 }
 
-export function DataTable({ caption, columns, rows, rowKey = 'id', empty }) {
+export function DataTable({ caption, columns, rows, rowKey = 'id', empty, variant = '' }) {
   if (!rows.length) return empty || <EmptyState title="Chưa có dữ liệu">Thêm bản ghi để bắt đầu.</EmptyState>
-  return <div className="ui-table-wrap"><table className="ui-table" role="table"><caption className="ui-sr-only">{caption}</caption><thead><tr role="row">{columns.map(column => <th key={column.key} scope="col" role="columnheader">{column.label}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row[rowKey]} role="row">{columns.map((column, index) => <td key={column.key} role="cell" data-label={column.label} className={index === 0 ? 'ui-cell-main' : ''}>{column.render ? column.render(row) : row[column.key]}</td>)}</tr>)}</tbody></table></div>
+  return <div className={`ui-table-wrap ${variant}`}><table className="ui-table" role="table"><caption className="ui-sr-only">{caption}</caption><thead><tr role="row">{columns.map(column => <th key={column.key} scope="col" role="columnheader">{column.label}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row[rowKey]} role="row">{columns.map((column, index) => <td key={column.key} role="cell" data-column={column.key} data-label={column.label} className={index === 0 ? 'ui-cell-main' : ''}>{column.render ? column.render(row) : row[column.key]}</td>)}</tr>)}</tbody></table></div>
 }
