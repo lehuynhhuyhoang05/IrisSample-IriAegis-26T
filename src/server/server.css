@@ -1,0 +1,59 @@
+.aegis-ui [hidden] { display: none !important; }
+.portal-layout .server-workflow, .portal-layout .server-narrow { max-width: 620px; }
+.portal-layout .server-workflow h1 { margin: 16px 0; font-size: 25px; line-height: 1.25; letter-spacing: -.6px; scroll-margin-top: 80px; }
+.portal-layout .server-workflow h1:focus { outline: none; }
+.portal-layout .server-workflow > .ui-button { margin: 12px 0; }
+.portal-layout .server-person-context { display: grid; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid var(--ui-border); margin-bottom: 20px; }
+.portal-layout .server-person-context strong { font-size: 18px; }
+.portal-layout .server-person-context span { font-size: 13px; color: var(--ui-muted); }
+.portal-layout .server-search { display: flex; gap: 8px; margin: 16px 0; }
+.portal-layout .server-search .ui-search { flex: 1; min-width: 0; }
+.portal-layout .server-search > .ui-button { flex: none; }
+.portal-layout .server-pager { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 18px; font-size: 13px; color: var(--ui-muted); }
+.portal-layout .server-subject-picker { max-width: 620px; }
+.portal-layout .server-subject-picker > .ui-field { margin-bottom: 18px; }
+.portal-layout .server-subject-picker .server-pager { margin-top: 0; font-size: 12px; }
+.portal-layout .server-section { margin-top: 28px; border-top: 1px solid var(--ui-border); padding-top: 20px; }
+.portal-layout .server-section h2 { font-size: 18px; margin-bottom: 16px; }
+.portal-layout .server-date-range > :first-child { grid-column: auto; }
+.portal-layout .server-unavailable { margin: 20px 0; padding-left: 14px; border-left: 2px solid var(--ui-border); max-width: 620px; }
+.portal-layout .server-unavailable h2 { font-size: 15px; margin: 0 0 6px; }
+.portal-layout .server-unavailable p { margin: 0; color: var(--ui-muted); font-size: 14px; line-height: 1.65; }
+.portal-layout .server-photo { display: block; width: 100%; max-width: 300px; max-height: 360px; object-fit: contain; margin: 16px auto; border-radius: 8px; }
+.portal-layout .server-details { margin: 20px 0; }
+.portal-layout .server-details > div { display: grid; grid-template-columns: 130px minmax(0,1fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--ui-border); font-size: 14px; }
+.portal-layout .server-details dt { color: var(--ui-muted); }
+.portal-layout .server-details dd { margin: 0; overflow-wrap: anywhere; }
+.portal-layout .server-back { display: inline-flex; min-height: 44px; align-items: center; margin-bottom: 12px; }
+.portal-layout .server-context-actions { margin: 16px 0; flex-wrap: wrap; }
+.portal-layout .server-context-actions a { min-height: 44px; display: inline-flex; align-items: center; padding-right: 12px; }
+.portal-layout .server-consent { margin: 20px 0; align-items: flex-start; line-height: 1.6; }
+.portal-layout .server-consent input { margin-top: 3px; }
+.portal-layout .server-feedback { padding: 12px 0; color: var(--ui-action); font-size: 14px; }
+.portal-layout .server-filters { max-width: 620px; margin: 12px 0 18px; }
+.portal-layout .server-filters > summary { min-height: 44px; padding-block: 12px; cursor: pointer; font-size: 14px; color: var(--ui-action); }
+.portal-layout .server-filters .portal-form { margin-top: 12px; }
+.portal-layout .server-course-list article { border-top: 1px solid var(--ui-border); padding: 22px 0; }
+.portal-layout .server-course-list h2 { font-size: 19px; margin: 0; }
+.portal-layout .server-course-list p { font-size: 14px; color: var(--ui-muted); margin: 8px 0 16px; }
+.portal-layout .server-job { margin: 20px 0; overflow-wrap: anywhere; }
+.portal-layout .server-job h3 { font-size: 16px; }
+.portal-layout .server-job-error { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow-y: auto; font-size: 12px; }
+.aegis-ui .server-auth-links { display: flex; gap: 16px; margin: 20px 0; font-size: 14px; }
+.aegis-ui.portal-auth .portal-auth-links button { border: 0; padding: 0; min-height: 44px; background: transparent; color: var(--ui-action); font: inherit; font-size: 13px; cursor: pointer; }
+.aegis-ui.portal-auth .portal-help { margin-top: 24px; font-size: 13px; }
+.aegis-ui.portal-auth .portal-help summary { cursor: pointer; padding: 12px 0; }
+.aegis-ui.portal-auth h1 { font-size: 28px; margin-bottom: 24px; }
+@media (min-width: 768px) { .portal-layout .server-workflow { margin-inline: auto; } }
+@media (max-width: 639px) {
+  .portal-layout .server-directory .ui-table tbody tr { display: grid; grid-template-columns: minmax(0,1fr) 92px; gap: 4px 12px; padding: 16px 0; align-items: center; }
+  .portal-layout .server-directory .ui-table td { padding: 0; min-width: 0; }
+  .portal-layout .server-directory .ui-table td.ui-cell-main { grid-column: 1; }
+  .portal-layout .server-directory .ui-cell-main a { font-size: 15px; font-weight: 600; }
+  .portal-layout .server-directory .ui-table td[data-column=email], .portal-layout .server-directory .ui-table td[data-column=time_slot] { grid-column: 1; font-size: 13px; color: var(--ui-muted); }
+  .portal-layout .server-directory .ui-table td::before { display: none; }
+  .portal-layout .server-directory .ui-table td[data-column=actions] { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .portal-layout .server-directory .ui-table td[data-column=actions] .ui-actions { gap: 2px; flex-wrap: nowrap; }
+  .portal-layout .server-directory td[data-column=actions] .ui-button { font-size: 0; width: 44px; padding: 0; gap: 0; }
+  .portal-layout .server-directory .ui-table td[data-column=role] { grid-column: 2; grid-row: 1 / span 2; }
+}
