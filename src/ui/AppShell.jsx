@@ -1,4 +1,4 @@
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from './icons'
 import logo from '../assets/android/ic_app_logo.png'
 
 export function AppShell({ items, activeId, children, brandSubtitle = 'Thư viện giao diện', navigationLabel = 'NỀN TẢNG WEB', context = 'Thiết kế & phát triển', badge = 'Nội bộ nhóm', footer }) {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { Camera, CameraOff, Check, RefreshCcw, X } from 'lucide-react'
+import { Camera, CameraOff, Check, RefreshCcw, X } from './ui/icons'
 import { FaceDetector, FilesetResolver } from '@mediapipe/tasks-vision'
 import { getCoverCrop } from './camera-crop.js'
 import androidLogo from './assets/android/ic_app_logo.png'

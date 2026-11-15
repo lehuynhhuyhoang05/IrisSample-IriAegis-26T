@@ -1,4 +1,4 @@
-import { BookOpen, Layers, Palette, Users } from 'lucide-react'
+import { BookOpen, Layers, Palette, Users } from '../ui/icons'
 import { AppShell } from '../ui'
 import StudentsExample from './StudentsExample.jsx'
 import ComponentsExample from './ComponentsExample.jsx'

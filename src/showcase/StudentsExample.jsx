@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Download, Pencil, Plus, RotateCcw, Trash2 } from '../ui/icons'
 import { Badge, Button, DataTable, Dialog, EmptyState, Field, IconButton, Notice, PageHeader, SearchField } from '../ui'
 
 const initialStudents = [

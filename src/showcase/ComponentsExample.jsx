@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Camera, Check, Plus, Trash2 } from 'lucide-react'
+import { Camera, Check, Plus, Trash2 } from '../ui/icons'
 import { Badge, Button, Dialog, EmptyState, Field, LoadingState, Notice, PageHeader } from '../ui'
 
 function Example({ number, title, children, code }) {

@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
-import { AlertCircle, CheckCircle2, Info, LoaderCircle, Search, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Info, LoaderCircle, Search, X } from './icons'
 
 export function Button({ variant = 'primary', icon: Icon, busy = false, disabled, children, className = '', type = 'button', ...props }) {
   return <button {...props} type={type} disabled={disabled || busy} aria-busy={busy || undefined} className={`ui-button ui-button--${variant} ${className}`}>
