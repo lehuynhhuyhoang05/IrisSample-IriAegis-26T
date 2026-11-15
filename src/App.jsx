@@ -17,7 +17,8 @@ function cameraError(error) {
   return 'Không thể mở camera. Hãy kiểm tra thiết bị và thử lại.'
 }
 
-export default function App() {
+export default function App({ embedded = false, onCapture }) {
+  const Container = embedded ? 'div' : 'main'
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const detectorRef = useRef(null)
@@ -156,9 +157,9 @@ export default function App() {
 
   const faceText = { idle: 'Đang chờ camera', loading: 'Đang tải bộ phát hiện...', searching: 'Chưa thấy khuôn mặt', found: count > 1 ? `Phát hiện ${count} khuôn mặt` : 'Đã phát hiện khuôn mặt', error: 'Không tải được bộ phát hiện' }[face]
 
-  return <div className="app-shell">
-    <header className="topbar"><div className="brand"><span className="brand-icon"><img src={androidLogo} alt="" /></span><span>Iri<span>Aegis</span><small>ATTENDANCE SYSTEM</small></span></div><div className="top-right"><span className="prototype"><span/> Bản thử nghiệm</span><span className="avatar">IA</span></div></header>
-    <main className="main"><div className="heading"><h1>Chụp ảnh khuôn mặt</h1><p>Đặt khuôn mặt vào giữa khung hình</p></div>
+  return <div className={'app-shell' + (embedded ? ' embedded-camera' : '')}>
+    {!embedded && <header className="topbar"><div className="brand"><span className="brand-icon"><img src={androidLogo} alt="" /></span><span>Iri<span>Aegis</span><small>ATTENDANCE SYSTEM</small></span></div><div className="top-right"><a href="#/app">Mở quản lý</a><span className="prototype"><span/> Bản thử nghiệm</span><span className="avatar">IA</span></div></header>}
+    <Container className="main">{!embedded && <div className="heading"><h1>Chụp ảnh khuôn mặt</h1><p>Đặt khuôn mặt vào giữa khung hình</p></div>}
       <div className="workspace"><section className="camera-card" aria-label="Chụp ảnh khuôn mặt">
         <div className={'viewport ' + (photo ? 'has-photo' : '')}>
           <video ref={videoRef} autoPlay muted playsInline disablePictureInPicture className={camera === 'active' && !photo ? 'visible' : ''} />
@@ -168,9 +169,10 @@ export default function App() {
           {photo && <div className="photo-label"><Check size={14}/> ẢNH ĐÃ CHỤP</div>}
         </div>
         <div className="card-bottom"><div className="detect-status" role="status" aria-live="polite"><span className={'status-dot ' + (face === 'found' ? 'success' : '')} aria-hidden="true"/><strong>{photo ? 'Ảnh xem trước' : faceText}</strong></div>
-          <div className="actions">{camera === 'active' ? <><button className="btn secondary" onClick={stop}><CameraOff size={18}/> Tắt camera</button><button className="btn primary" onClick={capture}><Camera size={18}/> Chụp ảnh</button></> : <button className="btn primary" onClick={start} disabled={camera === 'loading'}>{photo ? <RefreshCcw size={18}/> : <Camera size={18}/>} {photo ? 'Chụp lại' : camera === 'loading' ? 'Đang mở...' : 'Bật camera'}</button>}</div></div>
-        {interrupted && camera === 'active' && <div className="error" role="alert"><img className="android-notice-icon" src={androidWarning} alt="" />Video tạm dừng. <button onClick={start}>Mở lại camera</button></div>}
-        {error && <div className="error" role="alert"><img className="android-notice-icon" src={androidWarning} alt="" />{error}<button onClick={() => setError('')} aria-label="Đóng"><X size={16}/></button></div>}
+          <div className="actions">{camera === 'active' ? <><button type="button" className="btn secondary" onClick={stop}><CameraOff size={18}/> Tắt camera</button><button type="button" className="btn primary" onClick={capture}><Camera size={18}/> Chụp ảnh</button></> : <button type="button" className="btn primary" onClick={start} disabled={camera === 'loading'}>{photo ? <RefreshCcw size={18}/> : <Camera size={18}/>} {photo ? 'Chụp lại' : camera === 'loading' ? 'Đang mở...' : 'Bật camera'}</button>}</div></div>
+        {photo && onCapture && <button type="button" className="btn primary" onClick={() => onCapture(photo)}>Sử dụng ảnh này</button>}
+        {interrupted && camera === 'active' && <div className="error" role="alert"><img className="android-notice-icon" src={androidWarning} alt="" />Video tạm dừng. <button type="button" onClick={start}>Mở lại camera</button></div>}
+        {error && <div className="error" role="alert"><img className="android-notice-icon" src={androidWarning} alt="" />{error}<button type="button" onClick={() => setError('')} aria-label="Đóng"><X size={16}/></button></div>}
       </section></div>
-    </main></div>
+    </Container></div>
 }
