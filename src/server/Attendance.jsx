@@ -42,6 +42,7 @@ export function ServerAttendance({ params }) {
 function AttendanceStep({ student, course, date, onBack }) {
   const { api, actor } = useServer(), task = useTask()
   const [step, setStep] = useState('review'), [result, setResult] = useState(null), [photo, setPhoto] = useState(null), [confirmed, setConfirmed] = useState(false)
+  const [livenessEvidence, setLivenessEvidence] = useState(null)
   const focus = useStepFocus(step), attempt = useRef(null)
   const attemptKey = `aegis.pending-checkin:${api.baseURL}:${actor.admin_id}:${course}:${student.student_id}:${date}`
   function record() {
@@ -59,15 +60,16 @@ function AttendanceStep({ student, course, date, onBack }) {
       setResult(checkin); setStep('done')
     })
   }
-  return <section className="server-workflow"><Button variant="quiet" disabled={task.busy} onClick={onBack}>← Danh sách lớp</Button>
+  return <section className={'server-workflow' + (step === 'camera' ? ' camera-step' : '')}><Button variant="quiet" disabled={task.busy} onClick={onBack}>← Danh sách lớp</Button>
     <h1 ref={focus} tabIndex={-1}>{step === 'done' ? 'Đã ghi nhận điểm danh' : step === 'camera' ? 'Chụp ảnh khuôn mặt' : 'Xác nhận điểm danh'}</h1>
     <div className="server-person-context"><strong>{student.full_name || student.student_id}</strong><span>{student.student_id} · {course} · {date.split('-').reverse().join('/')}</span></div>
-    {step === 'camera' ? <><CameraApp embedded onCapture={image => { setPhoto(image); setStep('review') }} /><Button variant="quiet" onClick={() => setStep('review')}>Hủy chụp</Button></> : step === 'done' ? <><Badge tone="success">Server đã xác nhận</Badge><dl className="server-details"><div><dt>Ngày</dt><dd>{result.checkin_date || date}</dd></div><div><dt>Giờ ghi nhận</dt><dd>{result.checkin_time || '—'}</dd></div></dl><div className="ui-actions"><Button onClick={onBack}>Điểm danh sinh viên khác</Button><a href={`#/app/reports?course=${encodeURIComponent(course)}&date=${date}`}>Xem lịch sử</a></div></> : <>
+    {step === 'camera' ? <><CameraApp embedded livenessRequired onCapture={(image, evidence) => { setPhoto(image); setLivenessEvidence(evidence); setConfirmed(false); setStep('review') }} /><Button variant="quiet" onClick={() => setStep('review')}>Hủy chụp</Button></> : step === 'done' ? <><Badge tone="success">Server đã xác nhận</Badge><dl className="server-details"><div><dt>Ngày</dt><dd>{result.checkin_date || date}</dd></div><div><dt>Giờ ghi nhận</dt><dd>{result.checkin_time || '—'}</dd></div></dl><div className="ui-actions"><Button onClick={onBack}>Điểm danh sinh viên khác</Button><a href={`#/app/reports?course=${encodeURIComponent(course)}&date=${date}`}>Xem lịch sử</a></div></> : <>
       <RequestError error={task.error} />
-      <Unavailable title="Điểm danh do giảng viên xác nhận">Server hiện nhận lượt điểm danh thủ công. Đối sánh khuôn mặt và liveness chưa có API tích hợp.</Unavailable>
+      <Unavailable title="Điểm danh do giảng viên xác nhận">Liveness qua dịch vụ nhóm 4 đã có; đối sánh danh tính và liên kết kết quả này với API điểm danh nhóm 1 chưa được cung cấp.</Unavailable>
       {photo && <img className="server-photo" src={photo} alt="Ảnh vừa chụp, đang giữ trên thiết bị" />}
-      <Button variant="secondary" disabled={task.busy} onClick={() => setStep('camera')}>{photo ? 'Chụp lại ảnh' : 'Chụp ảnh xem trước'}</Button>
+      <Button variant="secondary" disabled={task.busy} onClick={() => setStep('camera')}>{photo ? 'Chụp lại và kiểm tra liveness' : 'Chụp ảnh và kiểm tra liveness'}</Button>
       {photo && <p className="ui-hint">Ảnh đang ở trình duyệt; API điểm danh chưa nhận file ảnh.</p>}
+      {livenessEvidence?.is_real && <p className="ui-hint">Nhóm 4: REAL · Điểm {livenessEvidence.real_score}.{livenessEvidence.web_liveness?.active && ' Đã qua chớp mắt, quay đầu và phản xạ ánh sáng trên Web.'} Chưa đối sánh danh tính; kết quả không được tự gắn vào API điểm danh nhóm 1.</p>}
       <label className="portal-check server-consent"><input type="checkbox" checked={confirmed} disabled={task.busy} onChange={e => setConfirmed(e.target.checked)} />Tôi xác nhận sinh viên có mặt và ghi nhận thủ công.</label>
       <Button disabled={!confirmed} busy={task.busy} onClick={record}>{task.error ? 'Thử gửi lại cùng yêu cầu' : 'Ghi nhận lên server'}</Button>
       {attempt.current && <p className="ui-hint">Mã yêu cầu: {attempt.current.uuid}</p>}

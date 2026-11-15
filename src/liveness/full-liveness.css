@@ -1,0 +1,12 @@
+.full-liveness-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.5; margin-bottom: 16px; min-height: 44px; }
+.full-liveness-consent input { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.liveness-steps { display: flex; flex-wrap: wrap; gap: 8px 12px; list-style: none; padding: 0; margin: 0 0 16px; color: var(--ui-muted, var(--android-colorTextSecondary)); font-size: 12px; }
+.liveness-steps li[aria-current=step] { font-weight: 700; color: var(--ui-action, var(--android-colorPrimaryDark)); text-decoration: underline; text-underline-offset: 4px; }
+.full-liveness .camera-card > .btn { width: 100%; margin-top: 12px; }
+.liveness-screen-flash { position: fixed; inset: 0; z-index: 10000; pointer-events: none; }
+/* Measurement stimulus from group 4, not decorative colors. No transitions. */
+.liveness-screen-flash.red { background: #f00; }
+.liveness-screen-flash.blue { background: #00f; }
+.liveness-flash-stop { position: fixed; z-index: 10001; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); min-height: 44px; padding: 10px 16px; background: var(--android-colorSurface); color: var(--android-colorTextPrimary); border: 0; border-radius: 8px; font: inherit; font-size: 14px; white-space: nowrap; }
+.passive-test-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; margin-top: 12px; }
+.full-liveness video { pointer-events: none; }

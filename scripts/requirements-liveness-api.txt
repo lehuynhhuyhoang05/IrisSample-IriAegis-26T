@@ -1,0 +1,8 @@
+# Minimal API runtime tested separately from group 4's notebook requirements.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu
+numpy==2.2.6
+opencv-python-headless==4.11.0.86
+fastapi==0.162.5
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32

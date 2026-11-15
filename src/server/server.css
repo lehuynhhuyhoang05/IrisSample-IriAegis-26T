@@ -1,5 +1,11 @@
 .aegis-ui [hidden] { display: none !important; }
 .portal-layout .server-workflow, .portal-layout .server-narrow { max-width: 620px; }
+@media (max-width: 767px) {
+  .portal-layout .camera-step .server-person-context { padding-bottom: 0; margin-bottom: 8px; border: 0; gap: 4px; }
+  .portal-layout .camera-step .embedded-camera .main { padding-block: 8px 0; }
+  .portal-layout .camera-step .embedded-camera .viewport { width: min(100%, clamp(160px, calc((100svh - 400px) * .8), 360px)); margin-inline: auto; }
+  .portal-layout .camera-step .card-bottom { gap: 12px; padding-top: 12px; }
+}
 .portal-layout .server-workflow h1 { margin: 16px 0; font-size: 25px; line-height: 1.25; letter-spacing: -.6px; scroll-margin-top: 80px; }
 .portal-layout .server-workflow h1:focus { outline: none; }
 .portal-layout .server-workflow > .ui-button { margin: 12px 0; }

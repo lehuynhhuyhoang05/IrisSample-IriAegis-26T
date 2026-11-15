@@ -12,6 +12,6 @@ export default function Workspace() {
     return () => window.removeEventListener('hashchange', change)
   }, [])
   if (path.startsWith('#/ui-kit')) return <Suspense fallback={<p role="status">Đang mở thư viện giao diện…</p>}><Showcase path={path} /></Suspense>
-  if (path.startsWith('#/camera')) return <App />
+  if (path.startsWith('#/camera')) return <App key={path.startsWith('#/camera/passive') ? 'passive' : 'full'} passiveOnly={path.startsWith('#/camera/passive')} />
   return <Suspense fallback={<p role="status">Đang mở không gian quản lý…</p>}><Portal path={path || '#/app'} /></Suspense>
 }

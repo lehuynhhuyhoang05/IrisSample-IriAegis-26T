@@ -37,7 +37,7 @@ export function PhotoField({ value, onChange }) {
     <div className="portal-section-heading"><div><h3>Ảnh khuôn mặt</h3><p>Chụp hoặc chọn ảnh.</p></div>{value && <img src={value} alt="Ảnh đã chọn" />}</div>
     <div className="ui-actions"><Button variant="secondary" icon={Camera} onClick={event => { trigger.current = event.currentTarget; setCamera(!camera) }}>{camera ? 'Đóng camera' : 'Chụp khuôn mặt'}</Button><label className="portal-file">Chọn ảnh<input aria-label="Chọn ảnh khuôn mặt" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { const file = e.target.files?.[0]; if (!file) return; task.run(async () => { if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5000000) throw new Error('Chọn ảnh JPEG, PNG hoặc WebP dưới 5 MB.'); const url = URL.createObjectURL(file); try { onChange(await resizePhoto(url)) } finally { URL.revokeObjectURL(url) } }); e.target.value = '' }} /></label>{value && <Button icon={Trash2} variant="quiet" onClick={() => onChange('')}>Bỏ ảnh</Button>}</div>
     <ErrorNotice error={task.error} />
-    {camera && <div ref={captureRef}><CameraApp embedded onCapture={image => task.run(async () => { onChange(await resizePhoto(image)); setCamera(false); requestAnimationFrame(() => trigger.current?.focus()) })} /></div>}
+    {camera && <div ref={captureRef}><CameraApp embedded livenessRequired onCapture={image => task.run(async () => { onChange(await resizePhoto(image)); setCamera(false); requestAnimationFrame(() => trigger.current?.focus()) })} /></div>}
   </div>
 }
 
@@ -76,22 +76,24 @@ export function ImportDialog({ entity, courseId, onClose }) {
   </Dialog>
 }
 
-// Proposed adapter only: group 4 will supply implementation. Never infer liveness from face count.
+// Camera liveness uses group 4. Identity matching remains explicitly simulated here.
 export function FaceFlow({ onComplete, onCancel, label = 'Xác thực khuôn mặt' }) {
   const { simulate } = usePortal(), task = useTask()
   const [image, setImage] = useState(''), [step, setStep] = useState('camera'), [result, setResult] = useState('pass')
+  const [liveness, setLiveness] = useState(null)
   const controller = useRef(new AbortController())
   useEffect(() => { controller.current = new AbortController(); return () => controller.current.abort() }, [])
   async function verify() {
     await simulate(controller.current.signal)
+    if (image && !liveness?.is_real) throw new Error('Ảnh chưa đạt liveness qua dịch vụ nhóm 4.')
     if (result === 'fail') throw new Error('Giả lập: không đạt liveness. Hãy thử lại hoặc chụp lại.')
     if (result === 'mismatch') throw new Error('Giả lập: khuôn mặt không khớp. Chưa ghi điểm danh.')
     setStep('verified')
   }
   return <section className="portal-face-flow" aria-label={label}>
-    <div className="portal-steps" aria-label="Tiến trình"><span className={step === 'camera' ? 'current' : ''}>1. Chụp ảnh</span><span className={step === 'review' ? 'current' : ''}>2. Liveness & đối sánh</span><span className={step === 'verified' ? 'current' : ''}>3. Xác nhận</span></div>
-    <Notice tone="warning" title="Xác thực giả lập">Kết quả demo, chưa xác minh người thật hoặc danh tính.</Notice>
-    {step === 'camera' ? <><CameraApp embedded onCapture={photo => { setImage(photo); setStep('review') }} /><Button variant="quiet" onClick={() => { setImage(''); setStep('review') }}>Dùng kịch bản không camera (giả lập)</Button></> : <div className="portal-review">{image ? <img src={image} alt="Ảnh chờ xác thực giả lập" /> : <div className="portal-no-photo"><Camera size={36} /><span>Không có ảnh · kịch bản giả lập</span></div>}<div><h3>{step === 'verified' ? 'Kiểm tra giả lập đã đạt' : 'Kiểm tra ảnh trước khi tiếp tục'}</h3><p>Không có ảnh hoặc dữ liệu nào được gửi đến server.</p>{step === 'review' && <Field as="select" label="Kịch bản liveness / đối sánh" value={result} onChange={e => setResult(e.target.value)} options={[{ value: 'pass', label: 'Giả lập đạt' }, { value: 'fail', label: 'Giả lập không đạt liveness' }, { value: 'mismatch', label: 'Giả lập không khớp khuôn mặt' }]} />}</div></div>}
-    <ErrorNotice error={task.error} /><div className="ui-actions"><Button variant="secondary" disabled={task.busy} onClick={onCancel}>Hủy xác thực</Button>{step !== 'camera' && <Button variant="secondary" disabled={task.busy} onClick={() => { setStep('camera'); setImage(''); task.setError('') }}>Chụp lại</Button>}{step === 'review' && <Button busy={task.busy} onClick={() => task.run(verify)}>Chạy kiểm tra giả lập</Button>}{step === 'verified' && <Button busy={task.busy} onClick={() => task.run(async () => { await simulate(controller.current.signal); await onComplete({ image, simulated: true }) })}>Xác nhận kết quả demo</Button>}</div>
+    <div className="portal-steps" aria-label="Tiến trình"><span className={step === 'camera' ? 'current' : ''}>1. Chụp ảnh & liveness</span><span className={step === 'review' ? 'current' : ''}>2. Đối sánh demo</span><span className={step === 'verified' ? 'current' : ''}>3. Xác nhận</span></div>
+    <Notice tone="warning" title="Đối sánh danh tính giả lập">Camera gọi liveness nhóm 4; đối sánh danh tính và ghi nhận demo vẫn là giả lập.</Notice>
+    {step === 'camera' ? <><CameraApp embedded livenessRequired onCapture={(photo, evidence) => { setImage(photo); setLiveness(evidence); setResult('pass'); setStep('review') }} /><Button variant="quiet" onClick={() => { setImage(''); setLiveness(null); setStep('review') }}>Dùng kịch bản không camera (giả lập)</Button></> : <div className="portal-review">{image ? <img src={image} alt="Ảnh đã kiểm tra liveness, chờ đối sánh danh tính giả lập" /> : <div className="portal-no-photo"><Camera size={36} /><span>Không có ảnh · kịch bản giả lập</span></div>}<div><h3>{step === 'verified' ? 'Kiểm tra giả lập đã đạt' : 'Kiểm tra ảnh trước khi tiếp tục'}</h3><p>{image ? `Nhóm 4: ${liveness?.result} · REAL ${liveness?.real_score}. Chưa đối sánh danh tính thật.` : 'Kịch bản không camera: không gọi API liveness, không gửi ảnh.'}</p>{step === 'review' && <Field as="select" label={image ? 'Kịch bản đối sánh (giả lập)' : 'Kịch bản liveness / đối sánh'} value={result} onChange={e => setResult(e.target.value)} options={[{ value: 'pass', label: 'Giả lập đạt' }, ...(!image ? [{ value: 'fail', label: 'Giả lập không đạt liveness' }] : []), { value: 'mismatch', label: 'Giả lập không khớp khuôn mặt' }]} />}</div></div>}
+    <ErrorNotice error={task.error} /><div className="ui-actions"><Button variant="secondary" disabled={task.busy} onClick={onCancel}>Hủy xác thực</Button>{step !== 'camera' && <Button variant="secondary" disabled={task.busy} onClick={() => { setStep('camera'); setImage(''); setLiveness(null); task.setError('') }}>Chụp lại</Button>}{step === 'review' && <Button busy={task.busy} onClick={() => task.run(verify)}>Chạy kiểm tra giả lập</Button>}{step === 'verified' && <Button busy={task.busy} onClick={() => task.run(async () => { await simulate(controller.current.signal); await onComplete({ image, liveness, simulated: true }) })}>Xác nhận kết quả demo</Button>}</div>
   </section>
 }

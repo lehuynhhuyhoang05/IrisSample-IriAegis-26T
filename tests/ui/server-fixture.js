@@ -14,6 +14,8 @@ export async function fixture(page) {
     admins: [{ ...actor }], recipients: [{ email_id: 1, subject_id: 'WEB301', email_address: 'daotao@test.local', recipient_name: 'Phòng đào tạo', is_selected: true }], memberships: new Map() }
   state.memberships.set('WEB301', new Set(state.students.map(row => row.student_id)))
   await page.route('**/api/v1/**', async route => {
+    // Group 4 uses the same version suffix under an independent proxy prefix.
+    if (new URL(route.request().url()).pathname.startsWith('/liveness-api/')) return route.fallback()
     const request = route.request(), url = new URL(request.url()), path = url.pathname.replace('/api/v1', ''), method = request.method(), multipart = request.headers()['content-type']?.includes('multipart/form-data')
     const raw = request.postData(), body = request.headers()['content-type']?.includes('json') ? request.postDataJSON() : multipart ? Object.fromEntries([...raw.matchAll(/name="([^"\r\n]+)"[^\r\n]*\r\n(?:[^\r\n]+\r\n)*\r\n([\s\S]*?)(?=\r\n--)/g)].map(match => [match[1], match[1] === 'file' ? 'binary' : match[2]])) : undefined
     const operation = matchOperation(method, path)
