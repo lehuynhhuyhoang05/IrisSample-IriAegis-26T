@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Badge, Button, DataTable, EmptyState, Field, Notice, PageHeader } from '../ui'
+import { Badge, Button, DataTable, EmptyState, Field, PageHeader } from '../ui'
 import { usePortal, useTask } from './Store.jsx'
 import { command, coursesFor, dayLabel, roster, scheduledOn, statusLabel, statusTone, today } from './domain.js'
 import { Confirm, ErrorNotice, Person } from './shared.jsx'
@@ -35,7 +35,7 @@ export default function MockAttendance() {
     persist(next)
     setMessage(operation.kind === 'clear' ? `Đã xóa ${count} lượt hôm nay của môn ${courseId}.` : `Đã tạo ${count} lượt thử; giữ nguyên các lượt đã có.`)
   }
-  return <><PageHeader title="Điểm danh thử" /><Notice tone="info">Dữ liệu thử trên trình duyệt; không xác thực danh tính.</Notice>
+  return <><PageHeader title="Điểm danh thử" />
     <div className="portal-filter-grid portal-mock-filters"><Field as="select" label="Môn học" value={courseId} onChange={e => { setCourseId(e.target.value); setScheduleId(''); setMessage(''); task.setError('') }} options={courses.map(c => ({ value: c.id, label: `${c.id} · ${c.name}` }))} /><Field as="select" label="Ca học hôm nay" value={schedule?.id || ''} onChange={e => setScheduleId(e.target.value)} options={schedules.length ? schedules.map(s => ({ value: s.id, label: `${dayLabel(s.day)} · ${s.start}–${s.end}` })) : [{ value: '', label: 'Không có ca học hôm nay' }]} /></div>
     {message && <p role="status">{message}</p>}<ErrorNotice error={task.error} />
     <div className="portal-form"><label className="portal-check"><input type="checkbox" checked={custom} onChange={e => setCustom(e.target.checked)} />Dùng giờ tùy chọn</label>{custom && <Field label="Giờ điểm danh thử" type="time" value={time} onChange={e => setTime(e.target.value)} />}</div>

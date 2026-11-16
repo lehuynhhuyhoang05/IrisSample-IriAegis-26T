@@ -30,12 +30,15 @@ export class FlashSampler {
   constructor(now) {
     this.stage = 'baseline'; this.requestedAt = now; this.presentedAt = now
     this.presentedMediaTime = -Infinity; this.samples = {}; this.lastTimestamp = -Infinity; this.trace = []
+    this.presentations = []; this.skipped = { awaitingPaint: 0, settling: 0, staleTimestamp: 0, invalidRGB: 0 }
   }
   // The UI acknowledges each color after commit and two animation frames. This
   // bounds paint scheduling; it cannot confirm physical display/camera latency.
-  present(color, now, mediaTime) {
+  present(color, now, mediaTime, display) {
     if (color !== this.stage || this.presentedAt !== null) return
     this.presentedAt = now; this.presentedMediaTime = mediaTime
+    this.presentations.push({ color, requestedAtMs: this.requestedAt, acknowledgedAtMs: now, mediaTime,
+      delayMs: now - this.requestedAt, ...(display ? { display } : {}) })
   }
   phase(now) {
     if (this.failure) return { color: 'off', sample: null, done: true }
@@ -57,22 +60,25 @@ export class FlashSampler {
     const settled = elapsed !== null && elapsed >= (this.stage === 'baseline' ? 0 : FLASH_TIMING.settle)
     return { color: this.stage, sample: settled ? this.stage : null, done: false }
   }
-  add(rgb, now, timestamp) {
+  add(rgb, now, timestamp, metadata) {
     const phase = this.phase(now)
     const settle = this.stage === 'baseline' ? 0 : FLASH_TIMING.settle / 1000
-    if (!phase.sample || timestamp <= this.lastTimestamp || timestamp < this.presentedMediaTime + settle) return
+    if (!phase.sample) { this.skipped[this.presentedAt === null ? 'awaitingPaint' : 'settling']++; return }
+    if (timestamp <= this.lastTimestamp || timestamp < this.presentedMediaTime + settle) { this.skipped.staleTimestamp++; return }
     this.lastTimestamp = timestamp
-    if (!rgb || !['r', 'g', 'b'].every(k => Number.isFinite(rgb[k]))) return
+    if (!rgb || !['r', 'g', 'b'].every(k => Number.isFinite(rgb[k]))) { this.skipped.invalidRGB++; return }
     const previous = this.samples[phase.sample] || { r: 0, g: 0, b: 0, count: 0 }
     const next = { count: previous.count + 1 }
     for (const k of ['r', 'g', 'b']) next[k] = (previous[k] * previous.count + rgb[k]) / next.count
     this.samples[phase.sample] = next
     this.trace.push({ phase: phase.sample, afterDisplayMs: Math.round(now - this.presentedAt),
+      timestamp, mediaAfterDisplayMs: Number.isFinite(this.presentedMediaTime) ? (timestamp - this.presentedMediaTime) * 1000 : null,
+      frameMetadata: Object.fromEntries(['captureTime', 'presentationTime', 'expectedDisplayTime', 'presentedFrames', 'processingDuration'].filter(key => Number.isFinite(metadata?.[key])).map(key => [key, metadata[key]])),
       r: rgb.r, g: rgb.g, b: rgb.b })
     this.trace = this.trace.slice(-128)
   }
   result() {
-    const report = { ...evaluateFlash(this.samples), trace: [...this.trace], timing: FLASH_TIMING, limits: FLASH_LIMITS }
+    const report = { ...evaluateFlash(this.samples), trace: [...this.trace], presentations: [...this.presentations], skipped: { ...this.skipped }, timing: FLASH_TIMING, limits: FLASH_LIMITS }
     if (this.failure || !this.complete) return { ...report, passed: false, reason: this.failure || 'Chưa hoàn thành các pha ánh sáng.' }
     return report
   }

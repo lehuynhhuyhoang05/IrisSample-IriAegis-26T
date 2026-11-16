@@ -1,3 +1,4 @@
+import { cameraDiagnosticsEnabled } from '../ui/development.js'
 import { attendanceBody } from './contract.js'
 import { SubjectPicker } from './SubjectPicker.jsx'
 import { useEffect, useRef, useState } from 'react'
@@ -9,13 +10,16 @@ import { today } from './date.js'
 import { useServer } from './Session.jsx'
 import { useResource, useStepFocus } from './hooks.js'
 import { queryString, unwrap } from './client.js'
-import { Pager, RequestError, ResourceState, Unavailable } from './common.jsx'
+import { Pager, RequestError, ResourceState } from './common.jsx'
+import SessionContext from '../ui/SessionContext.jsx'
 
 export function ServerAttendance({ params }) {
   const [course, setCourse] = useState(params.get('course') || ''), [date, setDate] = useState(today()), [query, setQuery] = useState(''), [search, setSearch] = useState(''), [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState(null)
   const opener = useRef(null), workflowHash = useRef('')
   const students = useResource(course ? `/subjects/${encodeURIComponent(course)}/students` + queryString({ q: search, limit: 25, offset }) : null)
+  const subject = useResource(course ? `/subjects/${encodeURIComponent(course)}` : null)
+  const subjectName = subject.data ? unwrap(subject.data, 'subject')?.subject_name : ''
   function restoreList() { setSelected(null); requestAnimationFrame(() => { if (opener.current?.isConnected) { opener.current.focus({ preventScroll: true }); opener.current.scrollIntoView({ block: 'center' }) } }) }
   useEffect(() => {
     const onPop = () => {
@@ -33,13 +37,14 @@ export function ServerAttendance({ params }) {
     setSelected(row)
   }
   function leave() { if (window.history.state?.aegisAttendance) window.history.back(); else restoreList() }
-  return <><div hidden={!!selected}><PageHeader title="Điểm danh" /><SubjectPicker value={course} onChange={value => { setCourse(value); setOffset(0); setSearch(''); setQuery('') }} />
-    <Field type="date" label="Ngày điểm danh" value={date} onChange={e => setDate(e.target.value)} />
+  return <><div className="attendance-workspace" hidden={!!selected}><PageHeader title="Điểm danh" />
+    <SessionContext title={subjectName || course || 'Chọn môn học'} subtitle={course ? `${course} · ${date.split('-').reverse().join('/')}` : ''}><SubjectPicker value={course} onChange={value => { setCourse(value); setOffset(0); setSearch(''); setQuery('') }} /><Field type="date" label="Ngày điểm danh" value={date} onChange={e => setDate(e.target.value)} /></SessionContext>
     {course ? <><form className="server-search" onSubmit={e => { e.preventDefault(); setSearch(query); setOffset(0) }}><SearchField placeholder="Tìm sinh viên trong môn…" value={query} onChange={e => setQuery(e.target.value)} /><Button type="submit" variant="secondary">Tìm kiếm</Button></form>
-      <ResourceState resource={students}>{data => <><DataTable rowKey="student_id" caption="Danh sách điểm danh" variant="attendance-list" rows={data.items || []} columns={[{ key: 'full_name', label: 'Sinh viên', render: row => <span><strong>{row.full_name || row.student_id}</strong><small className="portal-block-muted">{row.student_id}</small></span> }, { key: 'actions', label: 'Thao tác', render: row => <Button variant="secondary" disabled={!date} onClick={event => choose(row, event)}>Điểm danh</Button> }]} empty={<EmptyState title="Chưa có sinh viên phù hợp" action={<a href={`#/app/courses/${encodeURIComponent(course)}`}>Mở danh sách ghi danh</a>} />} /><Pager total={data.total} offset={offset} onChange={setOffset} /></>}</ResourceState></> : <EmptyState title="Chọn môn để điểm danh" />}
+      <ResourceState resource={students}>{data => <><p className="attendance-count">{data.total ?? data.items?.length ?? 0} sinh viên trong môn</p><DataTable rowKey="student_id" caption="Danh sách điểm danh" variant="attendance-list attendance-roster" rows={data.items || []} columns={[{ key: 'full_name', label: 'Sinh viên', render: row => <span><strong>{row.full_name || row.student_id}</strong><small className="portal-block-muted">{row.student_id}</small></span> }, { key: 'actions', label: 'Thao tác', render: row => <Button variant="secondary" disabled={!date} onClick={event => choose(row, event)}>Điểm danh</Button> }]} empty={<EmptyState title="Chưa có sinh viên phù hợp" action={<a href={`#/app/courses/${encodeURIComponent(course)}`}>Mở danh sách ghi danh</a>} />} /><Pager total={data.total} offset={offset} onChange={setOffset} /></>}</ResourceState></> : <EmptyState title="Chọn môn để điểm danh" />}
     </div>{selected && <AttendanceStep student={selected} course={course} date={date} onBack={leave} />}</>
 }
 function AttendanceStep({ student, course, date, onBack }) {
+  const diagnostics = cameraDiagnosticsEnabled()
   const { api, actor } = useServer(), task = useTask()
   const [step, setStep] = useState('review'), [result, setResult] = useState(null), [photo, setPhoto] = useState(null), [confirmed, setConfirmed] = useState(false)
   const [livenessEvidence, setLivenessEvidence] = useState(null)
@@ -65,14 +70,15 @@ function AttendanceStep({ student, course, date, onBack }) {
     <div className="server-person-context"><strong>{student.full_name || student.student_id}</strong><span>{student.student_id} · {course} · {date.split('-').reverse().join('/')}</span></div>
     {step === 'camera' ? <><CameraApp embedded livenessRequired onCapture={(image, evidence) => { setPhoto(image); setLivenessEvidence(evidence); setConfirmed(false); setStep('review') }} /><Button variant="quiet" onClick={() => setStep('review')}>Hủy chụp</Button></> : step === 'done' ? <><Badge tone="success">Server đã xác nhận</Badge><dl className="server-details"><div><dt>Ngày</dt><dd>{result.checkin_date || date}</dd></div><div><dt>Giờ ghi nhận</dt><dd>{result.checkin_time || '—'}</dd></div></dl><div className="ui-actions"><Button onClick={onBack}>Điểm danh sinh viên khác</Button><a href={`#/app/reports?course=${encodeURIComponent(course)}&date=${date}`}>Xem lịch sử</a></div></> : <>
       <RequestError error={task.error} />
-      <Unavailable title="Điểm danh do giảng viên xác nhận">Liveness qua dịch vụ liveness đã có; đối sánh danh tính và liên kết kết quả này với API điểm danh nhóm 1 chưa được cung cấp.</Unavailable>
+      <p className="ui-hint">Giảng viên kiểm tra danh tính trước khi ghi nhận.</p>
       {photo && <img className="server-photo" src={photo} alt="Ảnh vừa chụp, đang giữ trên thiết bị" />}
       <Button variant="secondary" disabled={task.busy} onClick={() => setStep('camera')}>{photo ? 'Chụp lại và kiểm tra liveness' : 'Chụp ảnh và kiểm tra liveness'}</Button>
-      {photo && <p className="ui-hint">Ảnh đang ở trình duyệt; API điểm danh chưa nhận file ảnh.</p>}
-      {livenessEvidence?.is_real && <p className="ui-hint">Liveness: REAL · Điểm {livenessEvidence.real_score}.{livenessEvidence.web_liveness?.active && ' Đã qua chớp mắt, quay đầu và phản xạ ánh sáng trên Web.'} Chưa đối sánh danh tính; kết quả không được tự gắn vào API điểm danh nhóm 1.</p>}
+
+      {livenessEvidence?.is_real && <p className="ui-hint">Ảnh đã qua kiểm tra người thật.</p>}
+      {diagnostics && livenessEvidence && <details className="portal-camera-tools"><summary>Thông tin tích hợp</summary><p>Liveness: {livenessEvidence.result} · Điểm {livenessEvidence.real_score}. Chưa đối sánh danh tính hoặc ràng buộc vào API điểm danh.</p><p>Ảnh đang ở trình duyệt; API điểm danh chưa nhận file ảnh.</p></details>}
       <label className="portal-check server-consent"><input type="checkbox" checked={confirmed} disabled={task.busy} onChange={e => setConfirmed(e.target.checked)} />Tôi xác nhận sinh viên có mặt và ghi nhận thủ công.</label>
       <Button disabled={!confirmed} busy={task.busy} onClick={record}>{task.error ? 'Thử gửi lại cùng yêu cầu' : 'Ghi nhận lên server'}</Button>
-      {attempt.current && <p className="ui-hint">Mã yêu cầu: {attempt.current.uuid}</p>}
+      {diagnostics && attempt.current && <p className="ui-hint">Mã yêu cầu: {attempt.current.uuid}</p>}
     </>}
   </section>
 }

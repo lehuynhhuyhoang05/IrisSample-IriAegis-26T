@@ -1,7 +1,7 @@
-/* global window, document, navigator, HTMLVideoElement, CanvasRenderingContext2D, performance, MutationObserver */
+/* global window, document, navigator, HTMLVideoElement, CanvasRenderingContext2D, performance, MutationObserver, localStorage */
 // Synthetic pixels and landmarks, shared by WebKit/Chrome orchestration tests.
 export async function fullCameraFixture(page, { reflected = true, locks = true, frameMs = 34, gpuFailure = false, warmupMs = 0,
-  dropCallbacks = false, staleMetadata = false, freezeVideo = false, inferenceStallMs = 0 } = {}) {
+  dropCallbacks = false, staleMetadata = false, freezeVideo = false, inferenceStallMs = 0, diagnostics = true } = {}) {
   await page.route('**/@mediapipe_tasks-vision.js*', route => route.fulfill({ contentType: 'application/javascript', body: `
     export const FilesetResolver={forVisionTasks:async()=>({})};
     export class FaceDetector {static async createFromOptions(){throw new Error('Use landmarks');}}
@@ -28,7 +28,8 @@ export async function fullCameraFixture(page, { reflected = true, locks = true, 
       }
     }
   ` }))
-  await page.addInitScript(({ reflected, locks, frameMs, gpuFailure, warmupMs, dropCallbacks, staleMetadata, freezeVideo, inferenceStallMs }) => {
+  await page.addInitScript(({ reflected, locks, frameMs, gpuFailure, warmupMs, dropCallbacks, staleMetadata, freezeVideo, inferenceStallMs, diagnostics }) => {
+    localStorage.setItem('aegis.camera-diagnostics', String(diagnostics))
     window.frameDelay = frameMs; window.gpuFailure = gpuFailure; window.warmupMs = warmupMs
     window.dropCallbacks = dropCallbacks; window.staleMetadata = staleMetadata; window.freezeVideo = freezeVideo; window.inferenceStallMs = inferenceStallMs
     window.cameraCalls = 0; window.testTracks = []; window.constraintWrites = []
@@ -59,10 +60,10 @@ export async function fullCameraFixture(page, { reflected = true, locks = true, 
       this.fillStyle = reflected ? color === 'red' ? 'rgb(180,80,40)' : color === 'blue' ? 'rgb(40,80,180)' : 'rgb(100,100,100)' : 'rgb(100,100,100)'
       this.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
-  }, { reflected, locks, frameMs, gpuFailure, warmupMs, dropCallbacks, staleMetadata, freezeVideo, inferenceStallMs })
+  }, { reflected, locks, frameMs, gpuFailure, warmupMs, dropCallbacks, staleMetadata, freezeVideo, inferenceStallMs, diagnostics })
 }
 export async function startFull(page) {
-  await page.getByLabel('Cho phép hai lượt sáng đỏ/xanh', { exact: false }).check()
+  await page.getByLabel('Tôi đồng ý dùng ánh sáng đỏ/xanh', { exact: false }).check()
   await page.getByRole('button', { name: 'Bắt đầu xác thực', exact: true }).click()
 }
 export async function completeActive(page, expect, { frameMs = 34 } = {}) {

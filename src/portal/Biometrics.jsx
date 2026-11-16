@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Badge, Button, Dialog, Notice, PageHeader } from '../ui'
+import { Badge, Button, Dialog, PageHeader } from '../ui'
 import { usePortal } from './Store.jsx'
 
 export function IrisUnavailable({ title = 'Ghi danh mống mắt', name, onClose }) {
-  return <Dialog open title={title} onClose={onClose} footer={<Button variant="secondary" onClick={onClose}>Đóng</Button>}><dl className="portal-details">{name && <><dt>Người đăng ký</dt><dd>{name}</dd></>}<dt>Thiết bị quét</dt><dd>Chưa kết nối</dd><dt>SDK / license</dt><dd>Chưa tích hợp trên Web</dd></dl><Notice tone="warning">Chưa thể bắt đầu quét hoặc xác thực mống mắt. Webcam thông thường không thay thế thiết bị quét.</Notice><Button disabled>Bắt đầu quét</Button></Dialog>
+  return <Dialog open title={title} onClose={onClose} footer={<Button variant="secondary" onClick={onClose}>Đóng</Button>}><dl className="portal-details">{name && <><dt>Người đăng ký</dt><dd>{name}</dd></>}<dt>Thiết bị quét</dt><dd>Chưa kết nối</dd><dt>SDK / license</dt><dd>Chưa tích hợp trên Web</dd></dl><p className="ui-hint">Cần kết nối thiết bị quét mống mắt để tiếp tục.</p><Button disabled>Bắt đầu quét</Button></Dialog>
 }
 
 export default function Biometrics() {

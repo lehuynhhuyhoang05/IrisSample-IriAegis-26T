@@ -9,13 +9,15 @@ import { LivenessStateMachine } from './liveness-state-machine.js'
 import { EyeCalibration, LANDMARK_MODEL, readLandmarks } from './landmark-input.js'
 import { FlashSampler, lockCamera, sampleFaceCore } from './flash-challenge.js'
 import logo from '../assets/android/ic_app_logo.png'
+import { cameraDiagnosticsEnabled } from '../ui/development.js'
+import { cameraMeasurementContext, downloadFlashSupport, rememberFlashCheck } from './support-report.js'
 import './full-liveness.css'
 
 const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm'
-const stepNumber = { waiting: 1, blink: 1, turn: 2, flash: 3, checking: 4, real: 4, fake: 4 }
 const blobFromCanvas = canvas => new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Không tạo được ảnh gửi server.')), 'image/jpeg', .92))
 
 export default function FullLivenessCamera({ embedded = false, onCapture }) {
+  const diagnostics = cameraDiagnosticsEnabled()
   const videoRef = useRef(null), runtime = useRef({ epoch: 0 })
   const [status, setStatus] = useState({ state: 'idle', message: 'Sẵn sàng xác thực' })
   const [photo, setPhoto] = useState(null), [result, setResult] = useState(null), [error, setError] = useState('')
@@ -65,7 +67,12 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
     if (!rt.flash || !['red', 'blue', 'off'].includes(flashColor)) return
     const first = requestAnimationFrame(() => {
       const second = requestAnimationFrame(() => {
-        if (epoch === rt.epoch) rt.flash?.present(flashColor, performance.now(), videoRef.current?.currentTime ?? 0)
+        if (epoch === rt.epoch) {
+          const overlay = document.querySelector('.liveness-screen-flash')
+          const bounds = overlay?.getBoundingClientRect()
+          const display = bounds ? { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height, color: getComputedStyle(overlay).backgroundColor } : undefined
+          rt.flash?.present(flashColor, performance.now(), videoRef.current?.currentTime ?? 0, display)
+        }
       })
       rt.paintFrames?.push(second)
     })
@@ -192,6 +199,7 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
         const lock = await lockCamera(track)
         if (epoch !== rt.epoch || challengeId !== rt.challengeId) { lock.release(); return }
         rt.lock = lock; rt.lockReport = { exposure: lock.exposure, whiteBalance: lock.whiteBalance }
+        rt.cameraInfo = cameraMeasurementContext(track)
         setCameraLock(rt.lockReport)
         rt.flash = new FlashSampler(performance.now()); rt.color = 'off'
       }
@@ -245,10 +253,11 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
               if (full.width !== video.videoWidth) full.width = video.videoWidth
               if (full.height !== video.videoHeight) full.height = video.videoHeight
               full.getContext('2d', { willReadFrequently: true }).drawImage(video, 0, 0)
-              rt.flash.add(sampleFaceCore(full, sample.faces[0]?.boundingBox), now, sample.timestamp)
+              rt.flash.add(sampleFaceCore(full, sample.faces[0]?.boundingBox), now, sample.timestamp, metadata)
             }
             if (phase.done && now >= rt.recoveryReadyAt) {
               rt.flashReport = rt.flash.result()
+              rememberFlashCheck({ flash: rt.flashReport, camera: rt.cameraInfo, cameraLock: rt.lockReport, frameSource: rt.frameSource, delegate: rt.delegate })
               setFlashReport(rt.flashReport)
               const active = rt.logic.flashResult(rt.flashReport)
               if (active.state !== 'active_passed') { setShowDetails(true); fail(active.message); return }
@@ -297,28 +306,36 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
 
   const running = !['idle', 'failed', 'real', 'fake'].includes(status.state)
   const hasCamera = ['opening', 'waiting', 'blink', 'turn', 'flash'].includes(status.state)
+  const message = { opening: 'Đang mở camera…', checking: 'Đang kiểm tra ảnh…', real: 'Đã hoàn tất kiểm tra', fake: 'Chưa xác thực được ảnh' }[status.state]
+    || (status.message === 'Sẵn sàng xác thực' ? 'Đặt khuôn mặt vào giữa khung' : status.message)
+  const errorMessage = diagnostics ? error
+    : /Phản xạ đỏ|kiểm tra phản xạ/.test(error) ? 'Chưa đo được phản xạ ánh sáng. Đưa mặt gần màn hình, tránh ngược sáng và thử lại.'
+    : /Chuyển động nhảy khung/.test(error) ? 'Hình ảnh chưa ổn định. Giữ máy cố định và thử lại.'
+    : /Lỗi phân tích camera/.test(error) ? 'Không đọc được hình ảnh. Hãy mở lại camera và thử lại.'
+    : /liveness|MiniVision|API|proxy|cổng 8000/i.test(error) ? 'Chưa thể hoàn tất kiểm tra ảnh. Kiểm tra kết nối mạng và thử lại.'
+    : error
   return <div className={'app-shell full-liveness' + (embedded ? ' embedded-camera' : '')}>
     {!embedded && <header className="topbar"><div className="brand"><span className="brand-icon"><img src={logo} alt="" /></span><span>IriAegis</span></div><a href="#/app">Mở quản lý</a></header>}
-    <Container className="main">{!embedded && <div className="heading"><h1>Xác thực khuôn mặt</h1><p>Chớp mắt, quay đầu, phản xạ ánh sáng và MiniVision</p></div>}
+    <Container className="main">{!embedded && <div className="heading"><h1>Xác thực khuôn mặt</h1></div>}
       <section className="camera-card" aria-label="Kiểm tra liveness">
-        {!running && !photo && <label className="full-liveness-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />Cho phép hai lượt sáng đỏ/xanh để đo phản xạ và gửi ảnh đến dịch vụ liveness.</label>}
-        <ol className="liveness-steps" aria-label="Các bước xác thực">{['Chớp mắt', 'Quay đầu', 'Ánh sáng', 'MiniVision'].map((label, i) => <li key={label} aria-current={stepNumber[status.state] === i + 1 ? 'step' : undefined}>{i + 1}. {label}</li>)}</ol>
         <div className={'viewport' + (photo ? ' has-photo' : '')}>
           <video ref={videoRef} autoPlay muted playsInline disablePictureInPicture className={hasCamera ? 'visible' : ''} />
           {photo && <img src={photo} alt="Ảnh sau kiểm tra liveness" />}
-          {!hasCamera && !photo && <div className="camera-placeholder"><Camera size={32}/><strong>Sẵn sàng xác thực</strong></div>}
-          {hasCamera && <div className={'face-guide' + (faces.length === 1 ? ' detected' : '')} aria-hidden="true" />}
-          {showDetails && hasCamera && <div className="face-detection-overlay" aria-hidden="true">{faces.map((face, index) => <div className="face-detection-box" key={index} style={{ left: `${face.preview.left}%`, top: `${face.preview.top}%`, width: `${face.preview.width}%`, height: `${face.preview.height}%` }}><span>{index + 1}</span></div>)}</div>}
+          {!hasCamera && !photo && <div className="camera-placeholder"><Camera size={32} aria-hidden="true" /></div>}
+          {!photo && <div className={'face-guide' + (faces.length === 1 ? ' detected' : '')} aria-hidden="true" />}
+          {diagnostics && showDetails && hasCamera && <div className="face-detection-overlay" aria-hidden="true">{faces.map((face, index) => <div className="face-detection-box" key={index} style={{ left: `${face.preview.left}%`, top: `${face.preview.top}%`, width: `${face.preview.width}%`, height: `${face.preview.height}%` }}><span>{index + 1}</span></div>)}</div>}
         </div>
-        <div className="card-bottom"><div className="detect-status" role="status" aria-live="polite"><strong>{status.message}</strong></div>
+        <div className="card-bottom"><div className="detect-status" role="status" aria-live="polite"><strong>{message}</strong></div>
+          {!running && !photo && <label className="full-liveness-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />Tôi đồng ý dùng ánh sáng đỏ/xanh và gửi ảnh để xác thực.</label>}
           <div className="actions">{running ? <button type="button" className="btn secondary" onClick={() => { releaseResources(); setStatus({ state: 'idle', message: 'Đã hủy xác thực' }); setPhoto(null); setResult(null); setError('') }}>Hủy xác thực</button> : <button type="button" className={'btn ' + (status.state === 'real' && onCapture ? 'secondary' : 'primary')} disabled={!consent} onClick={start}>{status.state === 'idle' ? <Camera size={18}/> : <RefreshCcw size={18}/>} {status.state === 'idle' ? 'Bắt đầu xác thực' : 'Xác thực lại'}</button>}</div>
         </div>
-        {error && <p className="error" role="alert">{error}</p>}
-        {status.state === 'fake' && <p className="error" role="alert">Dịch vụ trả FAKE. Không được sử dụng ảnh này.</p>}
+        {error && <p className="error" role="alert">{errorMessage}</p>}
+        {status.state === 'failed' && flashReport && <button type="button" className="camera-support-link" onClick={downloadFlashSupport}>Lưu thông tin lỗi</button>}
+        {status.state === 'fake' && <p className="error" role="alert">Ảnh chưa đạt kiểm tra người thật. Hãy dùng khuôn mặt trực tiếp và thử lại.</p>}
         {photo && onCapture && <button type="button" className="btn primary" disabled={status.state !== 'real'} onClick={() => { if (status.state === 'real' && result?.is_real) onCapture(photo, result) }}>Sử dụng ảnh này</button>}
-        {cameraLock && (!cameraLock.exposure || !cameraLock.whiteBalance) && <p className="liveness-disclosure">Camera không xác nhận khóa đủ phơi sáng/cân bằng trắng. Vẫn đo phản xạ; chưa xác nhận tương đương phần cứng Android.</p>}
-        <details className="liveness-details" open={showDetails} onToggle={event => setShowDetails(event.currentTarget.open)}><summary>Thông tin kiểm tra</summary>
+        {diagnostics && <details className="liveness-details" open={showDetails} onToggle={event => setShowDetails(event.currentTarget.open)}><summary>Thông tin kiểm tra</summary>
           <p>Luồng liveness trên Web; chưa đối sánh danh tính hoặc ràng buộc xác thực vào API điểm danh.</p>
+          {cameraLock && (!cameraLock.exposure || !cameraLock.whiteBalance) && <p>Camera không xác nhận khóa đủ phơi sáng/cân bằng trắng. Vẫn đo phản xạ; chưa xác nhận tương đương phần cứng Android.</p>}
           {metrics && <><p>EyeBlink: {metrics.blinkLeft?.toFixed(2) ?? '—'} / {metrics.blinkRight?.toFixed(2) ?? '—'} · Mắt mở: {metrics.calibrating ? 'đang hiệu chuẩn' : `${metrics.eyeLeft?.toFixed(2) ?? '—'} / ${metrics.eyeRight?.toFixed(2) ?? '—'}`} · {metrics.count} mặt</p><p>Góc quay/ngẩng/nghiêng: {metrics.yaw?.toFixed(1) ?? '—'}° / {metrics.pitch?.toFixed(1) ?? '—'}° / {metrics.roll?.toFixed(1) ?? '—'}°</p>{metrics.motion && <p>Chênh lệch frame: {metrics.motion.yaw.toFixed(1)}° / {metrics.motion.pitch.toFixed(1)}° / {metrics.motion.roll.toFixed(1)}° · {Math.round(metrics.motion.intervalMs)} ms</p>}</>}
           {metrics && <p>Xử lý: {metrics.delegate}{metrics.restartReason ? ` · Bắt đầu lại: ${metrics.restartReason}` : ''}</p>}
           {metrics?.frameSource && <p>Nguồn frame: {metrics.frameSource} · Suy luận: {Math.round(metrics.processingMs)} ms</p>}
@@ -326,8 +343,8 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
           {flashReport && <p>Flash: shift {flashReport.shift?.toFixed(3) ?? '—'} / 0.280 · normR {flashReport.normRed?.toFixed(3) ?? '—'} / 0.040 · normB {flashReport.normBlue?.toFixed(3) ?? '—'} / 0.040 · Baseline đối xứng: {flashReport.symmetric === undefined ? '—' : flashReport.symmetric ? 'đạt' : 'không đạt'} · Mẫu nền/đỏ/xanh: {flashReport.counts.baseline}/{flashReport.counts.red}/{flashReport.counts.blue}</p>}
           {flashReport && <button type="button" className="btn secondary" onClick={downloadMeasurement}>Tải số đo ánh sáng (.json)</button>}
           {result && <p>MiniVision: {result.result} · REAL {result.real_score} · Ngưỡng {result.threshold_used} · Flash shift {result.web_liveness.flash.shift.toFixed(3)}</p>}
-        </details>
-        {!embedded && <a className="passive-test-link" href="#/camera/passive">Thử riêng API phân loại ảnh</a>}
+        </details>}
+        {diagnostics && !embedded && <a className="passive-test-link" href="#/camera/passive">Thử riêng API phân loại ảnh</a>}
       </section>
     </Container>
     {['red', 'blue'].includes(flashColor) && <><div className={'liveness-screen-flash ' + flashColor} data-flash-phase={flashColor} aria-hidden="true" /><button type="button" className="liveness-flash-stop" onClick={() => fail('Đã dừng kiểm tra ánh sáng. Bạn có thể thử lại.')}>Dừng kiểm tra ánh sáng</button></>}

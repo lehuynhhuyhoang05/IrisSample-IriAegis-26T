@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, CalendarDays, Download, Search, UserCheck } from '../ui/icons'
+import { ArrowRight, CalendarDays, Check, Download, Search, UserCheck } from '../ui/icons'
+import SessionContext from '../ui/SessionContext.jsx'
 import { Badge, Button, DataTable, Dialog, EmptyState, Field, Notice, PageHeader, SearchField } from '../ui'
 import { usePortal, useTask } from './Store.jsx'
 import { classifyAttendance, coursesFor, dateLabel, dayLabel, fold, roster, scheduledOn, semesterReport, statusLabel, statusTone, today } from './domain.js'
@@ -32,6 +33,7 @@ export function Home() {
 export function Attendance({ initialCourse }) {
   const { db, actor, write, simulate } = usePortal(), filter = useCourseFilter(initialCourse), task = useTask()
   const [query, setQuery] = useState(''), [mode, setMode] = useState('list'), [code, setCode] = useState(''), [studentId, setStudentId] = useState(''), [password, setPassword] = useState(''), [stage, setStage] = useState('select'), [saved, setSaved] = useState(null)
+  const [listFilter, setListFilter] = useState('all')
   const rows = roster(db, filter.course, filter.date, filter.selected?.id)
   const selectedStudent = rows.find(s => s.id === studentId)
   const headingRef = useStepFocus(stage), listPosition = useRef(0), trigger = useRef(null)
@@ -58,7 +60,7 @@ export function Attendance({ initialCourse }) {
     task.cancel(); task.setError(''); setStage('select'); setPassword(''); setMode('list')
     requestAnimationFrame(() => { window.scrollTo(0, listPosition.current); if (trigger.current?.isConnected) trigger.current.focus({ preventScroll: true }) })
   }
-  if (stage !== 'select') return <section className="server-workflow"><Button variant="quiet" onClick={backToList}>← Danh sách lớp</Button>
+  if (stage !== 'select') return <section className={'server-workflow' + (stage === 'face' ? ' camera-step' : '')}><Button variant="quiet" onClick={backToList}>← Danh sách lớp</Button>
     <h1 ref={headingRef} tabIndex={-1}>{stage === 'face' ? 'Xác thực khuôn mặt' : stage === 'done' ? 'Kết quả điểm danh' : 'Thông tin điểm danh'}</h1>
     <div className="server-person-context"><strong>{selectedStudent?.name || 'Nhập mã sinh viên'}</strong><span>{filter.courseId} · {dateLabel(filter.date)} · {filter.selected?.start}–{filter.selected?.end}</span></div>
     {stage === 'face' && selectedStudent ? <FaceFlow key={`${filter.courseId}-${studentId}`} onComplete={save} onCancel={() => setStage('credentials')} /> : stage === 'done' && saved ? <section className="portal-result"><UserCheck size={32} /><h2>Đã ghi nhận điểm danh demo</h2><p>{saved.name} · {saved.time}</p><Badge tone={statusTone[saved.status]}>{statusLabel[saved.status]}</Badge><p>Kết quả giả lập, lưu tại trình duyệt.</p><div className="ui-actions"><Button onClick={() => { const next = pending[0]; if (next) select(next); else backToList() }}>{pending.length ? 'Sinh viên tiếp theo' : 'Về danh sách lớp'}</Button><Button variant="secondary" onClick={() => go(`reports?course=${filter.courseId}`)}>Xem báo cáo</Button></div></section> : <form onSubmit={credentials} className="portal-form">
@@ -67,14 +69,14 @@ export function Attendance({ initialCourse }) {
       <ErrorNotice error={task.error} /><div className="ui-actions"><Button type="submit" busy={task.busy}>Tiếp tục đến camera</Button><Button variant="secondary" onClick={backToList}>Hủy</Button></div>
     </form>}
   </section>
-  return <><PageHeader title="Điểm danh" />
-    <Filters filter={filter} />
+  return <div className="attendance-workspace"><PageHeader title="Điểm danh" actions={<Button variant="quiet" onClick={() => { setMode('code'); setStage('credentials'); task.setError('') }} disabled={!filter.selected}>Nhập mã sinh viên</Button>} />
+    <SessionContext title={filter.course?.name} subtitle={[filter.courseId, dateLabel(filter.date), filter.selected ? `${filter.selected.start}–${filter.selected.end}` : 'Không có ca học'].filter(Boolean).join(' · ')}><Filters filter={filter} /></SessionContext>
     {!filter.selected ? <EmptyState title="Chưa có buổi học phù hợp" action={filter.course && <Button variant="secondary" onClick={() => go(`courses/${filter.courseId}`)}>Xem lịch môn học</Button>}>Chọn ngày đúng lịch và nằm trong học kỳ.</EmptyState> : <>
-      <div className="portal-attendance-summary"><span><strong>{rows.length}</strong> sinh viên</span><span><strong>{rows.length - pending.length}</strong> đã ghi nhận</span><span><strong>{pending.length}</strong> còn lại</span><Badge>Demo</Badge></div>
-        <div className="portal-tabs" role="tablist" aria-label="Cách chọn sinh viên"><button role="tab" aria-selected={mode === 'list'} onClick={() => { setMode('list'); setStage('select'); task.setError('') }}>Chọn từ danh sách</button><button role="tab" aria-selected={mode === 'code'} onClick={() => { setMode('code'); setStage('credentials'); task.setError('') }}>Nhập mã sinh viên</button></div>
-        {mode === 'list' && <><div className="ui-toolbar"><SearchField placeholder="Tìm trong danh sách lớp…" value={query} onChange={e => setQuery(e.target.value)} /><span className="portal-muted"></span></div><DataTable variant="attendance-list" caption="Danh sách điểm danh" rows={rows.filter(s => fold(s.name + s.id).includes(fold(query)))} columns={[{ key: 'name', label: 'Sinh viên', render: s => <Person row={s} /> }, { key: 'status', label: 'Trạng thái', render: s => <Badge tone={statusTone[s.status]}>{statusLabel[s.status]}</Badge> }, { key: 'time', label: 'Giờ ghi nhận', render: s => s.record?.time || '—' }, { key: 'actions', label: 'Thao tác', render: s => <Button variant="secondary" disabled={!!s.record || filter.date > today()} onClick={() => select(s)}>{s.record ? 'Đã điểm danh' : 'Điểm danh'}</Button> }]} /></>}
+      <div className="attendance-progress"><span><strong>{rows.length - pending.length}/{rows.length}</strong> đã ghi nhận</span><span>{pending.length} còn lại</span><progress max={rows.length || 1} value={rows.length - pending.length} aria-label="Tiến độ điểm danh" /></div>
+      <div className="attendance-list-controls"><SearchField placeholder="Tìm tên hoặc mã sinh viên" value={query} onChange={e => setQuery(e.target.value)} /><div className="attendance-status-filters" aria-label="Lọc danh sách điểm danh">{[['all', `Tất cả (${rows.length})`], ['pending', `Chưa ghi nhận (${pending.length})`], ['done', `Đã ghi nhận (${rows.length - pending.length})`]].map(([value, label]) => <button type="button" key={value} aria-pressed={listFilter === value} onClick={() => setListFilter(value)}>{label}</button>)}</div></div>
+      <DataTable variant="attendance-list attendance-roster" caption="Danh sách điểm danh" rows={rows.filter(s => fold(s.name + s.id).includes(fold(query)) && (listFilter === 'all' || (listFilter === 'done' ? !!s.record : !s.record)))} columns={[{ key: 'name', label: 'Sinh viên', render: s => <Person row={s} /> }, { key: 'status', label: 'Trạng thái', render: s => <Badge tone={statusTone[s.status]}>{statusLabel[s.status]}</Badge> }, { key: 'actions', label: 'Thao tác', render: s => s.record ? <span className="attendance-receipt"><Check size={16} /><span><span>Đã ghi nhận</span><time>{s.record.time}</time></span></span> : <Button variant="secondary" disabled={filter.date > today()} onClick={() => select(s)}>Điểm danh</Button> }]} />
     </>}
-  </>
+  </div>
 }
 
 export function Reports({ initialCourse }) {
@@ -108,8 +110,7 @@ export function Reports({ initialCourse }) {
 function ReportSummary({ rows, semester = false }) {
   const keys = ['ON_TIME', 'LATE', 'ABSENT']
   const totals = keys.map(key => rows.reduce((sum, row) => sum + (semester ? row[key] || 0 : Number(row.status === key)), 0))
-  const maximum = Math.max(1, ...totals)
-  return <figure className="portal-report-chart" aria-label="Tổng quan điểm danh"><figcaption>{semester ? 'Lượt điểm danh trong học kỳ' : 'Tổng quan điểm danh'}</figcaption>{keys.map((key, i) => <div key={key} className={`portal-chart-row ${statusTone[key]}`}><span>{statusLabel[key]}</span><span className="portal-chart-track"><span style={{ width: `${totals[i] / maximum * 100}%` }} /></span><strong>{totals[i]}</strong></div>)}</figure>
+  return <dl className="portal-report-summary" aria-label={semester ? 'Lượt điểm danh trong học kỳ' : 'Tổng quan điểm danh'}>{keys.map((key, i) => <div key={key}><dt>{statusLabel[key]}</dt><dd>{totals[i]}</dd></div>)}</dl>
 }
 
 function StudentStats({ db, course, id, onClose }) {

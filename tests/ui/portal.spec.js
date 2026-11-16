@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer'
 import { test, expect } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('aegis.data-mode', 'demo'))
+  await page.addInitScript(() => { localStorage.setItem('aegis.data-mode', 'demo'); localStorage.setItem('aegis.camera-diagnostics', 'true') })
 })
 
 async function login(page, teacher = false) {
@@ -31,7 +31,7 @@ test('đăng nhập, CRUD sinh viên, lưu sau reload, đăng xuất', async ({ 
   await page.getByRole('button', { name: 'Xóa SV999', exact: true }).click()
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click()
   await expect(page.getByText('Sinh Viên Đã Sửa', { exact: true })).toHaveCount(0)
-  if (!await page.getByRole('button', { name: 'Đăng xuất', exact: true }).isVisible()) await page.getByRole('button', { name: 'Thêm mục điều hướng' }).click()
+  if (!await page.getByRole('button', { name: 'Đăng xuất', exact: true }).isVisible()) await page.getByRole('button', { name: 'Mở menu điều hướng' }).click()
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).last().click()
   await page.getByRole('button', { name: 'Xác nhận', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Đăng nhập' })).toBeVisible()
@@ -78,6 +78,7 @@ test('điểm danh giả lập: sai mật khẩu, liveness thất bại, thử l
   await expect(page.getByText('Mật khẩu điểm danh demo chưa đúng.')).toBeVisible()
   await page.getByLabel('Mật khẩu điểm danh', { exact: false }).fill('123456')
   await page.getByRole('button', { name: 'Tiếp tục đến camera' }).click()
+  await page.getByText('Kiểm thử giao diện', { exact: true }).click()
   await page.getByRole('button', { name: 'Dùng kịch bản không camera (giả lập)' }).click()
   await page.getByLabel('Kịch bản liveness / đối sánh').selectOption('fail')
   await page.getByRole('button', { name: 'Chạy kiểm tra giả lập' }).click()
@@ -88,7 +89,8 @@ test('điểm danh giả lập: sai mật khẩu, liveness thất bại, thử l
   await expect(page.getByRole('heading', { name: 'Đã ghi nhận điểm danh demo' })).toBeVisible()
   await page.goto('/#/app/attendance?course=WEB301')
   await page.reload()
-  await expect(page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' }).getByRole('button', { name: 'Đã điểm danh' })).toBeDisabled()
+  await expect(page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' })).toContainText('Đã ghi nhận')
+  await expect(page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' }).getByRole('button', { name: 'Điểm danh', exact: true })).toHaveCount(0)
   await page.goto('/#/app/reports?course=WEB301')
   await expect(page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' })).toContainText(/Đúng giờ|Muộn/)
   const downloading = page.waitForEvent('download')
@@ -154,7 +156,9 @@ test('quay lại danh sách rồi đổi môn không dùng kết quả xác th�
   await page.getByLabel('Mật khẩu điểm danh', { exact: false }).fill('123456')
   await page.getByRole('button', { name: 'Tiếp tục đến camera' }).click()
   await page.getByRole('button', { name: '← Danh sách lớp', exact: true }).click()
+  await page.getByRole('button', { name: 'Đổi buổi học' }).click()
   await page.getByLabel('Môn học', { exact: true }).selectOption('CSDL201')
+  await page.getByRole('button', { name: 'Xem danh sách lớp' }).click()
   // Allow the old simulated response to return; no face flow should open for the new class.
   await page.waitForTimeout(2100)
   await expect(page.getByRole('button', { name: 'Dùng kịch bản không camera (giả lập)' })).toHaveCount(0)
@@ -182,8 +186,8 @@ test('bố cục mobile: nội dung đầu trang, menu và form', async ({ page,
   expect(title.y).toBeLessThan(isMobile ? 130 : 160)
   if (isMobile) {
     await expect(page.locator('.portal-rail')).toBeHidden()
-    await expect(page.getByRole('navigation', { name: 'Điều hướng trên điện thoại' })).toBeVisible()
-    await page.getByRole('button', { name: 'Thêm mục điều hướng' }).click()
+    await expect(page.getByRole('button', { name: 'Mở menu điều hướng' })).toBeVisible()
+    await page.getByRole('button', { name: 'Mở menu điều hướng' }).click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await page.screenshot({ path: testInfo.outputPath('menu-mobile.png'), fullPage: true })
     await page.getByRole('dialog').getByRole('link', { name: 'Sinh viên', exact: true }).click()

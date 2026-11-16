@@ -1,4 +1,4 @@
-/* global localStorage, window, EventTarget */
+/* global localStorage, window, EventTarget, getComputedStyle */
 import { test, expect } from '@playwright/test'
 import { fixture, login as serverLogin } from './server-fixture.js'
 
@@ -12,16 +12,16 @@ async function preview(page) {
 test('menu phân nhóm giữ đủ đường dẫn và trả focus khi đóng', async ({ page }, info) => {
   await preview(page)
   await page.setViewportSize({ width: 390, height: 844 })
-  const trigger = page.getByRole('button', { name: 'Thêm mục điều hướng' })
+  const trigger = page.getByRole('button', { name: 'Mở menu điều hướng' })
   await trigger.click()
   const dialog = page.getByRole('dialog')
-  await expect(dialog.getByRole('navigation', { name: 'Các chức năng khác' })).toBeVisible()
+  await expect(dialog.getByRole('navigation', { name: 'Điều hướng trên điện thoại' })).toBeVisible()
   await expect(dialog.getByRole('link', { name: 'Sinh viên', exact: true })).toBeVisible()
   await expect(dialog.getByRole('link', { name: 'Sao lưu', exact: true })).toBeVisible()
   await page.screenshot({ path: info.outputPath('iphone-menu.png') })
   await page.getByRole('button', { name: 'Đóng hộp thoại' }).click()
   await expect(trigger).toBeFocused()
-  await expect(page.getByRole('navigation', { name: 'Điều hướng trên điện thoại' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Mở menu điều hướng' })).toBeVisible()
 })
 
 test('form trên iPhone giữ nút lưu trong vùng nhìn khi bàn phím thu nhỏ viewport', async ({ page }, info) => {
@@ -47,4 +47,57 @@ test('chế độ API ghi đúng Server trên thanh ứng dụng', async ({ page
   await fixture(page); await serverLogin(page)
   await expect(page.getByRole('link', { name: 'Cấu hình kết nối server', exact: true })).toHaveText('Server')
   await expect(page.getByRole('link', { name: 'Thiết lập demo', exact: true })).toHaveCount(0)
+})
+
+
+test('drawer từ trái, accordion, backdrop và theme Android', async ({ page }, info) => {
+  await page.setViewportSize({ width: 393, height: 680 })
+  await preview(page)
+  const trigger = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true })
+  expect(await page.locator('.portal-tabbar').count()).toBe(0)
+  expect(await page.locator('.portal-appbar').evaluate(e => getComputedStyle(e).backgroundColor)).toBe('rgb(102, 207, 207)')
+  await trigger.click()
+  const drawer = page.getByRole('dialog')
+  const bounds = await drawer.boundingBox()
+  await expect.poll(async () => Math.round((await drawer.boundingBox()).x)).toBe(0)
+  expect(bounds.y).toBe(0)
+  expect(bounds.width).toBeLessThan(340)
+  expect(bounds.height).toBe(680)
+  await expect(drawer.getByRole('link', { name: 'Điểm danh', exact: true })).toBeVisible()
+  const management = drawer.locator('details').filter({ has: page.locator('summary', { hasText: 'Quản lý' }) })
+  await management.locator('summary').click()
+  await expect(management.getByRole('link', { name: 'Sinh viên', exact: true })).toBeHidden()
+  await management.locator('summary').click()
+  await expect(management.getByRole('link', { name: 'Sinh viên', exact: true })).toBeVisible()
+  await page.screenshot({ path: info.outputPath('android-theme-left-drawer.png') })
+  await page.mouse.click(380, 300)
+  await expect(drawer).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await drawer.getByRole('link', { name: 'Sinh viên', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Sinh viên', exact: true })).toBeVisible()
+  await expect(drawer).toHaveCount(0)
+  await trigger.click()
+  await drawer.getByRole('button', { name: 'Đăng xuất', exact: true }).scrollIntoViewIfNeeded()
+  const close = drawer.getByRole('button', { name: 'Đóng hộp thoại', exact: true })
+  expect((await close.boundingBox()).y).toBeLessThan(90)
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
+})
+
+test('báo cáo dùng số liệu gọn, sao lưu không có banner thừa', async ({ page }, info) => {
+  await page.clock.setFixedTime(new Date('2026-11-16T12:00:00+07:00'))
+  await preview(page)
+  await page.goto('/#/app/reports?course=WEB301')
+  const summary = page.locator('dl[aria-label="Tổng quan điểm danh"]')
+  await expect(summary).toBeVisible()
+  await expect(summary.locator('dt')).toHaveText(['Đúng giờ', 'Muộn', 'Vắng'])
+  await expect(summary.locator('dd')).toHaveText(['2', '1', '5'])
+  await expect(page.locator('.portal-chart-track')).toHaveCount(0)
+  await page.screenshot({ path: info.outputPath('report-plain-totals.png') })
+  await page.goto('/#/app/backups')
+  await expect(page.getByRole('heading', { name: 'Sao lưu & khôi phục', exact: true })).toBeVisible()
+  await expect(page.getByText('Chỉ dùng dữ liệu thử nghiệm', { exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('Mã hóa file khi tải xuống')).toBeVisible()
+  await page.screenshot({ path: info.outputPath('backup-no-banner.png') })
 })

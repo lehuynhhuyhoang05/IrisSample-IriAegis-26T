@@ -13,6 +13,7 @@ test('server: login/restore, CRUD đúng payload, 204, giữ tìm kiếm khi qua
   await page.getByRole('button', { name: 'Lưu sinh viên' }).click(); await expect(page.getByText('Đã lưu lên server.')).toBeVisible()
   const create = state.writes.find(row => row.path === '/students'); expect(create.body.student_id).toBe('SV999'); expect(create.body).not.toHaveProperty('id'); expect(create.body).not.toHaveProperty('photo')
   await page.getByRole('searchbox').fill('Minh Anh'); await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click()
+  await expect(page.getByRole('link', { name: 'Nguyễn Minh Anh', exact: true })).toHaveAttribute('href', /return=.*q%3DMinh/);
   await page.getByRole('link', { name: 'Nguyễn Minh Anh', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Nguyễn Minh Anh', exact: true })).toBeVisible()
   await page.getByRole('link', { name: '← Sinh viên' }).click(); await expect(page.getByRole('searchbox')).toHaveValue('Minh Anh')
   await page.reload(); await expect(page.getByRole('searchbox')).toHaveValue('Minh Anh')

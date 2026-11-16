@@ -142,7 +142,7 @@ test('hợp đồng: thao tác UI chạm đủ 38 Web operations và payload/res
   await page.getByRole('button', { name: 'Đổi mật khẩu và đăng nhập lại', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible()
   await login(page)
-  if (!await page.getByRole('button', { name: 'Đăng xuất', exact: true }).isVisible()) await page.getByRole('button', { name: 'Thêm mục điều hướng', exact: true }).click()
+  if (!await page.getByRole('button', { name: 'Đăng xuất', exact: true }).isVisible()) await page.getByRole('button', { name: 'Mở menu điều hướng', exact: true }).click()
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).last().click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible()
