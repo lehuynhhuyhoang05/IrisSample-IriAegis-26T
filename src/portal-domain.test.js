@@ -9,6 +9,7 @@ test('giảng viên không thể sửa môn ngoài phạm vi, quản lý admin h
   assert.throws(() => command(db, 'ADM_LAN', { type: 'save', entity: 'courses', originalId: 'CSDL201', row: db.courses[1] }), /không được sửa/)
   assert.throws(() => command(db, 'ADM_LAN', { type: 'delete', entity: 'students', id: 'SV001' }), /Super Admin/)
   assert.throws(() => command(db, 'ADM_LAN', { type: 'save', entity: 'admins', row: { ...db.admins[2], id: 'ADM_NEW' } }), /Super Admin/)
+  assert.throws(() => command(db, 'ADM_LAN', { type: 'save', entity: 'admins', row: { id: 'ADM_NEW', name: 'Admin mới', email: 'moi@demo.test', password: 'Demo@123' } }), /Super Admin/)
 })
 test('bỏ khỏi môn giữ hồ sơ, môn khác và lịch sử; xóa môn chỉ xóa dữ liệu liên quan', () => {
   const db = seedData()

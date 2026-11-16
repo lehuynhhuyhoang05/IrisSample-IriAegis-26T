@@ -34,11 +34,11 @@ Giữ lại dữ liệu sau reload bằng `localStorage`; phiên đăng nhập d
 | Màn hình / route | Thao tác có thể thử | Phần còn chờ |
 |---|---|---|
 | `/#/app/login`, `forgot`, `reset` | Đăng nhập, đăng xuất, reset qua mã/hộp thư demo, bước mặt giả lập khi tài khoản có ảnh. | API auth/phiên/reset/email; đối sánh và liveness thật. |
-| Khởi tạo lần đầu | Tại Thiết lập demo, chọn Thử khởi tạo lần đầu để thử form Super Admin. | Quy tắc bootstrap và xác thực do server kiểm soát. |
+| Khởi tạo lần đầu | Khi chưa có Admin, đăng nhập mở form khởi tạo Super Admin; Thiết lập demo cũng có thể nạp lại trạng thái khởi tạo. | Quy tắc bootstrap và xác thực do server kiểm soát. |
 | `/#/app/home` | Lịch hôm nay theo lịch mẫu và tiến độ điểm danh. | Lịch dạy là đề xuất Web; dữ liệu/mô hình cần thống nhất. |
 | `/#/app/courses` và `courses/:id` | CRUD, tìm/lọc, import, phân công, lịch; danh sách lớp, gán/bỏ sinh viên, tạo/import vào môn. | API môn/enrollment; rule lịch, quyền, xóa và lịch sử. |
 | `/#/app/students` và `students/:id` | CRUD, tìm/lọc, import/export, chi tiết, chọn/chụp/bỏ ảnh. | API hồ sơ và lưu ảnh; kiểm tra trùng thật. |
-| `/#/app/admins` và `admins/:id` | CRUD Admin, ảnh, import và chi tiết; hạn chế UI cho giảng viên. | API tài khoản, email thông báo và kiểm tra quyền thật. |
+| `/#/app/admins`, `admins/new` và `admins/:id` | Super Admin xem/tạo/sửa/xóa Admin, mở chi tiết và nhập CSV; Admin thường bị chặn khỏi quản lý Admin. | API tài khoản, email thông báo và kiểm tra quyền thật. |
 | `/#/app/profile` | Sửa thông tin, ảnh, mật khẩu demo; xác nhận mật khẩu hiện tại khi đổi mật khẩu. | API hồ sơ, xác minh khi đổi ảnh/mật khẩu. |
 | `/#/app/attendance` | Chọn danh sách/nhập mã trên thiết bị chung → mật khẩu → camera → liveness/đối sánh giả lập → lưu demo; chuyển sinh viên tiếp theo. | Liveness Nhóm 4, đối sánh, API điểm danh và chống trùng server. |
 | `/#/app/reports` | Theo buổi, lịch sử, học kỳ, lọc, tỷ lệ có mặt, CSV đang lọc. | Quy tắc buổi/vắng/muộn và báo cáo chuẩn của server. |
@@ -65,7 +65,9 @@ CRUD lưu cục bộ; báo lỗi nếu không thể ghi hoặc quá dung lượn
 | File/khu vực | Trách nhiệm | Phối hợp |
 |---|---|---|
 | `src/ui`, `src/showcase`, `UI-GUIDELINES.md` | Bộ nền, token, component và ví dụ | Trưởng nhóm duy trì; thành viên đề xuất bổ sung bằng PR. |
-| `src/portal/Auth.jsx` | Tài khoản và reset demo | @MP-1611 |
+| `src/Auth/Auth.jsx` | Đăng nhập, khởi tạo Super Admin và reset demo | @MP-1611 |
+| `src/Auth/AdminCreate.jsx` | Màn tạo Admin riêng, dùng lại validation/domain của portal | @MP-1611 |
+| `src/portal/Auth.jsx` | Re-export tương thích của màn auth | @MP-1611 |
 | `src/portal/Catalog.jsx` | Form và danh sách Admin/môn/sinh viên, chi tiết/enrollment | Đang gom nhiều module. @MP-1611, @VoVanKiet-2005, @quangchien11 phải chia file hoặc thống nhất người sửa trước khi làm song song. |
 | `src/App.jsx`, `camera-crop.js`, `portal/shared.jsx` (`PhotoField`, `FaceFlow`) | Camera, trả ảnh và bước xác thực giả lập | @thang-nghien-dua phối hợp người gọi camera. |
 | `src/portal/Attendance.jsx` | Hôm nay, điểm danh và báo cáo | @vanphil207; phần Hôm nay phối hợp @VoVanKiet-2005. |

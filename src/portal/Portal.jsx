@@ -4,6 +4,7 @@ import { AppShell, Button, EmptyState, Notice } from '../ui'
 import { PortalProvider, usePortal } from './Store.jsx'
 import { isSuper } from './domain.js'
 import Auth from './Auth.jsx'
+import AdminCreate from '../Auth/AdminCreate.jsx'
 import { Catalog, CourseDetail, PersonDetail } from './Catalog.jsx'
 import { Attendance, Home, Reports } from './Attendance.jsx'
 import { Backups, DemoSettings, EmailPage } from './Operations.jsx'
@@ -25,6 +26,7 @@ function Content({ path }) {
   let content
   if (['home', 'login', 'forgot', 'reset', ''].includes(page)) content = <Home />
   else if (page === 'courses' && id) content = <CourseDetail key={id} id={id} />
+  else if (page === 'admins' && id === 'new') content = <AdminCreate />
   else if (['students', 'admins'].includes(page) && id) content = <PersonDetail key={id} entity={page} id={id} />
   else if (['courses', 'students', 'admins'].includes(page)) content = <Catalog key={page} entity={page} />
   else if (page === 'attendance') content = <Attendance key={course || 'all'} initialCourse={course} />
