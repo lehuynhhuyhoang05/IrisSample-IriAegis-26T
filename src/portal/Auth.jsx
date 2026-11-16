@@ -6,11 +6,13 @@ import { usePortal, useTask } from './Store.jsx'
 import { DEMO_PASSWORD, uid } from './domain.js'
 import { ErrorNotice, FaceFlow, go } from './shared.jsx'
 import { changeMode } from '../server/config.js'
+import { IrisUnavailable } from './Biometrics.jsx'
 
 export default function Auth({ page }) {
   const { db, write, persist, login, simulate } = usePortal(), task = useTask()
   const [email, setEmail] = useState('super@demo.test'), [password, setPassword] = useState(DEMO_PASSWORD), [name, setName] = useState('')
   const [repeat, setRepeat] = useState(''), [ticket, setTicket] = useState(null), [code, setCode] = useState(''), [pending, setPending] = useState(null)
+  const [iris, setIris] = useState(false)
   const setup = !db.admins.length, reset = page === 'reset', forgot = page === 'forgot'
   const title = setup ? 'Khởi tạo quản trị viên' : reset ? 'Đặt lại mật khẩu' : forgot ? 'Quên mật khẩu' : 'Đăng nhập'
   async function submit(event) {
@@ -51,8 +53,10 @@ export default function Auth({ page }) {
       </form>
       {forgot && ticket && <Notice tone="info" title="Hộp thư giả lập — chưa gửi email">Mã: <strong>{ticket.id}</strong> · hết hạn sau 10 phút, mất khi tải lại trang. <Button variant="quiet" onClick={() => { setCode(ticket.id); setPassword(''); setRepeat(''); go('reset') }}>Mở đặt lại mật khẩu</Button></Notice>}
       {!setup && <div className="ui-actions"><Button variant="quiet" onClick={() => { task.setError(''); go(forgot || reset ? 'login' : 'forgot') }}>{forgot || reset ? 'Quay lại đăng nhập' : 'Quên mật khẩu?'}</Button></div>}
+      {!setup && !reset && <Button variant="quiet" onClick={() => setIris(true)}>{forgot ? 'Đặt lại bằng mống mắt' : 'Đăng nhập bằng mống mắt'}</Button>}
       {!setup && !forgot && !reset && <div className="portal-demo-accounts"><h3>Tài khoản thử nghiệm</h3><p>Mật khẩu mẫu: <code>{DEMO_PASSWORD}</code></p><div className="ui-actions"><Button variant="secondary" onClick={() => { setEmail('super@demo.test'); setPassword(DEMO_PASSWORD) }}>Super Admin</Button><Button variant="secondary" onClick={() => { setEmail('lan@demo.test'); setPassword(DEMO_PASSWORD) }}>Giảng viên Lan</Button></div></div>}
     </>}
+    {iris && <IrisUnavailable title={forgot ? 'Đặt lại bằng mống mắt' : 'Đăng nhập bằng mống mắt'} onClose={() => setIris(false)} />}
     <div className="portal-auth-links"><button type="button" onClick={() => changeMode('server')}>Kết nối server</button><a href="#/camera">Camera độc lập</a>{import.meta.env.DEV && <a href="#/ui-kit">Bộ giao diện chung</a>}</div>
   </div></main></div>
 }

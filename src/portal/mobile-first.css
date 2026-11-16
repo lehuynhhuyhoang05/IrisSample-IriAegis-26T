@@ -138,6 +138,15 @@
   .portal-layout .ui-list-footer .ui-button { font-size: 12px; }
   .portal-layout .ui-page-header > .ui-actions { width: 100%; justify-content: space-between; }
 }
+
+/* A tablet keeps the rail, so its content column needs the wrapping header. */
+.portal-layout .portal-mock-filters { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1024px) {
+  .portal-layout .portal-mock-filters { grid-template-columns: 2fr 1fr; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .portal-layout .ui-page-header { flex-wrap: wrap; }
+}
 @media (min-width: 768px) {
   .aegis-ui.portal-layout { display: grid; grid-template-columns: 216px minmax(0,1fr); }
   .portal-layout .portal-rail { display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh; background: var(--ui-canvas); border-right: 1px solid var(--ui-border); padding: 28px 16px 20px; overflow-y: auto; }

@@ -4,8 +4,9 @@ import { Badge, Button, DataTable, Dialog, EmptyState, Field, Notice, PageHeader
 import { usePortal, useTask } from './Store.jsx'
 import { classifyAttendance, coursesFor, dateLabel, dayLabel, fold, roster, scheduledOn, semesterReport, statusLabel, statusTone, today } from './domain.js'
 import { ErrorNotice, FaceFlow, go, Person } from './shared.jsx'
-import { csvText, download } from './csv.js'
+import { download } from './csv.js'
 import { useStepFocus } from '../server/hooks.js'
+import { reportCSV } from './report-data.js'
 
 function useCourseFilter(initial) {
   const { db, actor } = usePortal(), courses = coursesFor(db, actor)
@@ -87,11 +88,10 @@ export function Reports({ initialCourse }) {
   const rows = source.filter(s => fold(s.name + (s.studentId || s.id)).includes(fold(query)) && (status === 'all' || (tab === 'semester' ? s[status] > 0 : s.status === status)))
   const columns = tab === 'semester' ? [{ key: 'name', label: 'Sinh viên', render: s => <Person row={s} /> }, { key: 'ON_TIME', label: 'Đúng giờ' }, { key: 'LATE', label: 'Muộn' }, { key: 'ABSENT', label: 'Vắng', render: s => <Badge tone={s.ABSENT >= 2 ? 'danger' : s.ABSENT ? 'warning' : 'neutral'}>{s.ABSENT}</Badge> }, { key: 'rate', label: 'Tỷ lệ có mặt', render: s => s.rate === null ? 'Chưa có buổi' : `${s.rate}%` }] : [{ key: 'name', label: 'Sinh viên', render: s => <span><strong>{s.name}</strong><small className="portal-block-muted">{s.studentId || s.id}</small></span> }, ...(tab === 'history' ? [{ key: 'date', label: 'Ngày', render: s => dateLabel(s.date) }] : []), { key: 'time', label: 'Giờ', render: s => s.record?.time || s.time || '—' }, { key: 'status', label: 'Trạng thái', render: s => <Badge tone={statusTone[s.status]}>{statusLabel[s.status]}</Badge> }]
   function exportRows() {
-    const headers = tab === 'semester' ? ['Mã SV', 'Họ tên', 'Đúng giờ', 'Muộn', 'Vắng', 'Tỷ lệ %'] : ['Mã SV', 'Họ tên', 'Ngày', 'Giờ', 'Trạng thái', 'Nguồn']
-    const values = rows.map(s => tab === 'semester' ? [s.id, s.name, s.ON_TIME, s.LATE, s.ABSENT, s.rate ?? ''] : [s.studentId || s.id, s.name, s.date || filter.date, s.record?.time || s.time || '', statusLabel[s.status], 'DEMO'])
-    download(csvText(headers, values), `bao-cao-${filter.courseId || 'trong'}-${tab}.csv`)
+    download(reportCSV(rows, tab, filter.date), `bao-cao-${filter.courseId || 'trong'}-${tab}.csv`)
   }
-  return <><PageHeader  title="Lịch sử & báo cáo"  actions={<><Button variant="secondary" icon={Download} disabled={!rows.length} onClick={exportRows}>Xuất CSV đang lọc</Button><Button disabled={!filter.course} onClick={() => go(`email?course=${filter.courseId}`)}>Chuẩn bị email</Button></>} />
+  const emailParams = new URLSearchParams({ course: filter.courseId, mode: tab, date: filter.date, schedule: filter.selected?.id || '', from, to, q: query, status })
+  return <><PageHeader  title="Lịch sử & báo cáo"  actions={<><Button variant="secondary" icon={Download} disabled={!rows.length} onClick={exportRows}>Xuất CSV đang lọc</Button><Button disabled={!filter.course || (tab !== 'session' && from > to)} onClick={() => go(`email?${emailParams}`)}>Chuẩn bị email</Button></>} />
     <div className="portal-tabs" role="tablist" aria-label="Loại báo cáo">{[['session', 'Theo buổi học'], ['history', 'Lịch sử ghi nhận'], ['semester', 'Tổng hợp học kỳ']].map(([value, label]) => <button key={value} role="tab" aria-selected={tab === value} onClick={() => { setTab(value); setStatus('all') }}>{label}</button>)}</div>
     <Filters filter={filter} includeSession={tab === 'session'} />
     {tab !== 'session' && <div className="portal-filter-grid"><Field type="date" label="Từ ngày" value={from} onChange={e => setFrom(e.target.value)} /><Field type="date" label="Đến ngày" value={to} min={from} onChange={e => setTo(e.target.value)} /></div>}

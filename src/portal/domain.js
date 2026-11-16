@@ -19,18 +19,18 @@ export function seedData(empty = false) {
   if (empty) return base
   base.admins = [
     { id: 'SADM_DEMO', name: 'Hoàng · Quản trị', email: 'super@demo.test', role: 'SUPER_ADMIN', password: DEMO_PASSWORD, code: 'SA01', phone: '', photo: '' },
-    { id: 'ADM_LAN', name: 'Nguyễn Minh Lan', email: 'lan@demo.test', role: 'ADMIN', password: DEMO_PASSWORD, code: 'GV01', phone: '', photo: '' },
-    { id: 'ADM_NAM', name: 'Trần Hoài Nam', email: 'nam@demo.test', role: 'ADMIN', password: DEMO_PASSWORD, code: 'GV02', phone: '', photo: '' },
+    { id: 'ADM_LAN', name: 'Nguyễn Minh Lan', email: 'lan@demo.test', role: 'ADMIN', password: DEMO_PASSWORD, code: 'GV01', phone: '0900000001', dob: '1990-05-15', gender: 'Nữ', description: 'Giảng viên phụ trách môn Web', photo: '' },
+    { id: 'ADM_NAM', name: 'Trần Hoài Nam', email: 'nam@demo.test', role: 'ADMIN', password: DEMO_PASSWORD, code: 'GV02', phone: '0900000002', dob: '1988-09-20', gender: 'Nam', description: 'Giảng viên phụ trách môn Cơ sở dữ liệu', photo: '' },
   ]
   base.courses = [
     { id: 'WEB301', name: 'Phát triển ứng dụng Web', room: 'B.402', semester: 'Học kỳ 1', startDate: `${year}-01-01`, endDate: `${year}-12-31`, instructorId: 'ADM_LAN', createdBy: 'SADM_DEMO', schedules: [{ id: 'WEB_S1', day, start: '07:30', end: '11:30' }] },
     { id: 'CSDL201', name: 'Cơ sở dữ liệu', room: 'A.203', semester: 'Học kỳ 1', startDate: `${year}-01-01`, endDate: `${year}-12-31`, instructorId: 'ADM_NAM', createdBy: 'SADM_DEMO', schedules: [{ id: 'DB_S1', day, start: '13:00', end: '16:30' }] },
     { id: 'JAVA202', name: 'Lập trình Java', room: 'B.305', semester: 'Học kỳ 1', startDate: `${year}-01-01`, endDate: `${year}-12-31`, instructorId: '', createdBy: 'SADM_DEMO', schedules: [{ id: 'JAVA_S1', day: (day + 1) % 7, start: '07:30', end: '11:30' }] },
   ]
-  base.students = ['Nguyễn An Bình', 'Lê Minh Châu', 'Trần Gia Hân', 'Phạm Quốc Huy', 'Võ Khánh Linh', 'Đặng Hoàng Long', 'Bùi Ngọc Mai', 'Ngô Thanh Phong'].map((name, index) => ({ id: `SV${String(index + 1).padStart(3, '0')}`, name, email: `sv${index + 1}@demo.test`, className: 'CNTT K24', password: '123456', photo: '', createdBy: 'SADM_DEMO' }))
+  base.students = ['Nguyễn An Bình', 'Lê Minh Châu', 'Trần Gia Hân', 'Phạm Quốc Huy', 'Võ Khánh Linh', 'Đặng Hoàng Long', 'Bùi Ngọc Mai', 'Ngô Thanh Phong'].map((name, index) => ({ id: `SV${String(index + 1).padStart(3, '0')}`, name, email: `sv${index + 1}@demo.test`, phone: `09000001${String(index + 1).padStart(2, '0')}`, className: index < 4 ? 'CNTT K24' : 'HTTT K24', password: '123456', photo: '', createdBy: 'SADM_DEMO' }))
   base.enrollments = base.students.flatMap((s, i) => [{ studentId: s.id, courseId: 'WEB301', since: `${year}-01-01` }, ...(i < 4 ? [{ studentId: s.id, courseId: 'CSDL201', since: `${year}-01-01` }] : [])])
   base.attendance = [0, 1, 2].map((i) => ({ id: `ATT_${i}`, studentId: base.students[i].id, courseId: 'WEB301', scheduleId: 'WEB_S1', date, time: i === 2 ? '07:46' : '07:25', status: i === 2 ? 'LATE' : 'ON_TIME', simulated: true }))
-  base.recipients = [{ id: 'MAIL_1', courseId: 'WEB301', name: 'Phòng đào tạo (mẫu)', email: 'daotao@demo.test' }]
+  base.recipients = [{ id: 'MAIL_1', courseId: 'WEB301', name: 'Phòng đào tạo (mẫu)', email: 'daotao@demo.test' }, { id: 'MAIL_2', courseId: 'CSDL201', name: 'Giáo vụ (mẫu)', email: 'giaovu@demo.test' }]
   return base
 }
 function requireThat(condition, message) { if (!condition) throw new Error(message) }
@@ -108,7 +108,7 @@ export function command(db, actorId, action) {
   const actor = next.admins.find(a => a.id === actorId)
   if (action.type === 'bootstrap') {
     requireThat(!next.admins.length, 'Hệ thống đã có quản trị viên.')
-    const row = { ...action.row, id: 'SADM_INITIAL', role: 'SUPER_ADMIN', photo: '', phone: '', code: 'SA01' }
+    const row = { ...action.row, id: 'SADM_INITIAL', role: 'SUPER_ADMIN', photo: '', phone: '', code: 'SA01', firstLogin: true }
     validateEntity(next, 'admins', row); next.admins.push(row); return next
   }
   requireThat(actor, 'Phiên làm việc đã hết. Hãy đăng nhập lại.')
@@ -121,6 +121,7 @@ export function command(db, actorId, action) {
     if (entity === 'admins') {
       requireThat(isSuper(actor) || old?.id === actor.id, 'Chỉ Super Admin quản lý tài khoản khác.')
       row.role = old?.role || 'ADMIN'
+      row.firstLogin = row.photo ? false : (old?.firstLogin ?? !old)
     }
     if (entity === 'courses') {
       requireThat(!old || canCourse(actor, old), 'Bạn không được sửa môn này.')
@@ -179,6 +180,10 @@ export function command(db, actorId, action) {
     requireThat(action.simulated === true, 'Prototype chỉ nhận kết quả xác thực giả lập.')
     requireThat(!next.attendance.some(a => a.studentId === action.studentId && a.courseId === action.courseId && a.date === action.date && a.scheduleId === action.scheduleId), 'Sinh viên đã điểm danh buổi này; không tạo bản ghi trùng.')
     next.attendance.push({ id: uid('ATT'), studentId: action.studentId, courseId: action.courseId, scheduleId: action.scheduleId, date: action.date, time: action.time, status: classifyAttendance(action.time, schedule.start), simulated: true })
+  } else if (action.type === 'clearTestAttendance') {
+    requireThat(canCourse(actor, next.courses.find(c => c.id === action.courseId)), 'Môn học ngoài phạm vi của bạn.')
+    requireThat(action.date === today(), 'Công cụ thử chỉ xóa điểm danh hôm nay.')
+    next.attendance = next.attendance.filter(a => a.courseId !== action.courseId || a.date !== action.date)
   } else if (action.type === 'recipient') {
     requireThat(canCourse(actor, next.courses.find(c => c.id === action.row.courseId)), 'Môn học ngoài phạm vi của bạn.')
     email(action.row.email); nonempty(action.row.name, 'Tên người nhận')

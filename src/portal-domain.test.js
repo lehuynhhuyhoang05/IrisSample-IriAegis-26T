@@ -3,6 +3,27 @@ import assert from 'node:assert/strict'
 import { classifyAttendance, command, coursesFor, roster, seedData, semesterReport, today, validateBackup } from './portal/domain.js'
 import { csvText, parseCSV } from './portal/csv.js'
 
+test('dữ liệu mẫu liên kết đúng và hỗ trợ kiểm thử các vai trò, lớp học, điểm danh và báo cáo', () => {
+  const db = seedData(), date = today()
+  assert.deepEqual(validateBackup({ format: 'iriaegis-web-demo', data: db }), db)
+  assert.deepEqual(db.admins.map(a => a.email), ['super@demo.test', 'lan@demo.test', 'nam@demo.test'])
+  assert.deepEqual(coursesFor(db, db.admins[0]).map(c => c.id), ['WEB301', 'CSDL201', 'JAVA202'])
+  assert.deepEqual(coursesFor(db, db.admins[1]).map(c => c.id), ['WEB301'])
+  assert.deepEqual(coursesFor(db, db.admins[2]).map(c => c.id), ['CSDL201'])
+  assert.equal(db.students.length, 8)
+  assert(db.students.every(s => s.password === '123456'))
+  assert.equal(db.enrollments.filter(e => e.courseId === 'WEB301').length, 8)
+  assert.equal(db.enrollments.filter(e => e.courseId === 'CSDL201').length, 4)
+  assert.equal(db.enrollments.filter(e => e.courseId === 'JAVA202').length, 0)
+  const rows = roster(db, db.courses[0], date, 'WEB_S1')
+  assert.equal(rows.length, 8)
+  assert.equal(rows.filter(s => s.record).length, 3)
+  assert.equal(rows.find(s => s.id === 'SV003').status, 'LATE')
+  assert.deepEqual(db.recipients.map(r => r.courseId), ['WEB301', 'CSDL201'])
+  assert(db.students.every(s => /^\d{10}$/.test(s.phone)))
+  assert.equal(new Set(db.students.map(s => s.className)).size, 2)
+})
+
 test('giảng viên không thể sửa môn ngoài phạm vi, quản lý admin hoặc xóa sinh viên toàn hệ thống', () => {
   const db = seedData()
   assert.deepEqual(coursesFor(db, db.admins[1]).map(c => c.id), ['WEB301'])
