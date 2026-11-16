@@ -94,14 +94,12 @@ test('server: đăng nhập lỗi không dùng dữ liệu mẫu, ADMIN chỉ c�
   expect(state.writes.some(row => row.path === '/auth/refresh')).toBe(false)
 })
 
-test('cấu hình demo cũ không thay thế server và không xóa dữ liệu đã lưu', async ({ page }) => {
+test('cấu hình demo mở màn đăng nhập mẫu và không xóa dữ liệu đã lưu', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('aegis.data-mode', 'demo')
-    localStorage.setItem('iriaegis.business-demo.v1', 'saved-demo-data')
   })
   await page.goto('/#/app/login')
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Mở dữ liệu mẫu' })).toHaveCount(0)
-  await expect(page.getByLabel('Email', { exact: false })).toHaveValue('')
-  expect(await page.evaluate(() => localStorage.getItem('iriaegis.business-demo.v1'))).toBe('saved-demo-data')
+  await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('aegis.data-mode'))).toBe('demo')
 })

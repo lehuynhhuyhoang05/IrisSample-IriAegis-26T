@@ -2,7 +2,7 @@
 
 Phiên bản nền 0.1 · Trưởng nhóm duy trì · Áp dụng cho các màn hình Web tuần 2.
 
-**Kết nối server:** `/#/app` dùng server. Thành viên dùng `src/server/client.js`, hook tải dữ liệu và component chung khi phát triển. Không lấy password/vector từ localStorage để xác thực server và không dùng kết quả giả lập làm liveness thật.
+**Dữ liệu:** `/#/app` hỗ trợ server và dữ liệu mẫu để kiểm thử giao diện. Thành viên dùng `src/server/client.js`, hook tải dữ liệu và component chung cho các màn server. Không lấy password/vector từ localStorage để xác thực server và không dùng kết quả giả lập làm liveness thật.
 
 **Quy chuẩn giao diện nghiệp vụ cập nhật:** đọc `DESIGN.md` và `AGENTS.md`. Portal dùng `src/portal/PortalShell.jsx`: trên mobile header gọn và tabbar dưới, menu phụ ở “Thêm”; từ 768px có sidebar. Các mô tả `AppShell` và breakpoint UI kit trong tài liệu này là mẫu thư viện, không thay thế bố cục portal. CSS sản phẩm nằm ở `src/portal/mobile-first.css`, nạp sau CSS nền. Không thêm đoạn giải thích dưới mọi tiêu đề hoặc đưa nguyên menu desktop lên đầu mobile.
 
@@ -33,7 +33,7 @@ Lấy địa chỉ Vite in trong terminal và thêm `/#/ui-kit`:
 - `/#/ui-kit/foundation`: bảng màu, typography, khoảng cách, icon và responsive.
 - `/#/ui-kit/guide`: hướng dẫn triển khai ngắn.
 - `/#/camera`: prototype camera gốc.
-- `/` hoặc `/#/app`: ứng dụng nghiệp vụ kết nối server.
+- `/` hoặc `/#/app`: ứng dụng nghiệp vụ, có thể chọn server hoặc dữ liệu mẫu.
 
 Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu giả nằm trong state và có thể mất khi chuyển trang hoặc tải lại. Mẫu không triển khai đầy đủ nghiệp vụ sinh viên, quan hệ nhiều môn, phân quyền hay đối sánh khuôn mặt; không dùng nó làm đặc tả API. Không nhập thông tin thật.
 

@@ -16,7 +16,7 @@ Trình duyệt gọi `/api/v1` qua proxy Vite; đích mặc định `http://loca
 
 ## Dữ liệu nghiệp vụ
 
-Ứng dụng nghiệp vụ sử dụng dữ liệu và tài khoản do server cung cấp. Khi server chưa chạy hoặc API lỗi, giao diện hiển thị trạng thái lỗi; cần cấu hình kết nối và tài khoản phù hợp để kiểm thử. Những chức năng chưa có API được ghi rõ trên giao diện.
+Ứng dụng có chế độ kết nối server và chế độ dữ liệu mẫu để kiểm thử giao diện. Tại màn đăng nhập chọn **Mở dữ liệu mẫu**, sau đó đăng nhập `super@demo.test` hoặc `lan@demo.test` với mật khẩu `Demo@123`. Mật khẩu điểm danh mẫu là `123456`. Dữ liệu mẫu lưu trên trình duyệt, tách biệt với server.
 
 ## Bộ nền giao diện cho nhóm — tuần 2
 

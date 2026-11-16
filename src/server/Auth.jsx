@@ -3,6 +3,7 @@ import { Button, Field, Notice } from '../ui'
 import logo from '../assets/android/ic_app_logo.png'
 import { useTask } from './use-task.js'
 import { useServer } from './Session.jsx'
+import { changeMode } from './config.js'
 import { RequestError } from './common.jsx'
 import { resetBody } from './contract.js'
 
@@ -45,6 +46,6 @@ export default function ServerAuth({ page = 'login' }) {
     </form>
     <div className="server-auth-links">{forgot ? <a href="#/app/reset">Tôi đã có mã đặt lại</a> : !reset && <a href="#/app/forgot">Quên mật khẩu?</a>}{(forgot || reset) && <a href="#/app/login">Quay lại đăng nhập</a>}</div>
     <details className="portal-help"><summary>Kết nối server</summary><ConnectionForm /></details>
-    <div className="portal-auth-links"><a href="#/camera">Camera độc lập</a></div>
+    <div className="portal-auth-links"><button type="button" onClick={() => changeMode('demo')}>Mở dữ liệu mẫu</button><a href="#/camera">Camera độc lập</a></div>
   </div></main></div>
 }

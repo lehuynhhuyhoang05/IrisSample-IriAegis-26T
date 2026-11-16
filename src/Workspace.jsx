@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import App from './App.jsx'
 
 const Showcase = import.meta.env.DEV ? lazy(() => import('./showcase/Showcase.jsx')) : null
-const Portal = lazy(() => import('./server/ServerPortal.jsx'))
+const Portal = lazy(() => import('./portal/Portal.jsx'))
 import './ui/tokens.css'
 import './ui/ui.css'
 import './portal/portal.css'
