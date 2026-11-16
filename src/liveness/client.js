@@ -7,7 +7,7 @@ export function validateLivenessResult(data) {
   if (data?.status !== 'success' || typeof data.is_real !== 'boolean' ||
       data.result !== (data.is_real ? 'REAL' : 'FAKE') ||
       !score(data.real_score) || !score(data.spoof_score) || !score(data.threshold_used)) {
-    throw new Error('API nhóm 4 trả kết quả không hợp lệ. Chưa thể xác nhận liveness.')
+    throw new Error('API liveness trả kết quả không hợp lệ. Chưa thể xác nhận liveness.')
   }
   // Scores are rounded by the service; is_real/result are its verdict.
   return Object.freeze({ status: data.status, result: data.result, is_real: data.is_real,
@@ -31,12 +31,12 @@ export async function predictLiveness(blob, { signal, fetcher = globalThis.fetch
     if (signal?.aborted) throw new DOMException('Đã hủy kiểm tra', 'AbortError')
     const data = await response.json().catch(() => null)
     if (signal?.aborted) throw new DOMException('Đã hủy kiểm tra', 'AbortError')
-    if (!response.ok) throw new Error(typeof data?.detail === 'string' ? data.detail : `Server liveness trả lỗi ${response.status}. Hãy kiểm tra dịch vụ nhóm 4.`)
+    if (!response.ok) throw new Error(typeof data?.detail === 'string' ? data.detail : `Server liveness trả lỗi ${response.status}. Hãy kiểm tra dịch vụ liveness.`)
     return validateLivenessResult(data)
   } catch (error) {
     if (signal?.aborted) throw new DOMException('Đã hủy kiểm tra', 'AbortError')
     if (timedOut) throw new Error('Server liveness phản hồi quá lâu. Hãy thử kiểm tra lại.', { cause: error })
-    if (error instanceof TypeError) throw new Error('Không kết nối được server liveness nhóm 4. Kiểm tra dịch vụ cổng 8000 hoặc cấu hình proxy.', { cause: error })
+    if (error instanceof TypeError) throw new Error('Không kết nối được server liveness. Kiểm tra dịch vụ cổng 8000 hoặc cấu hình proxy.', { cause: error })
     throw error
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort) }
 }

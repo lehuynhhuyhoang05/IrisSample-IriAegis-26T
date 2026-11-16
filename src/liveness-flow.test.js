@@ -1,11 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { Group4Logic, angleDistance } from './liveness/group4-logic.js'
-import { checkFlashMetrics, evaluateFlash, FlashSampler, lockCamera } from './liveness/group4-flash.js'
+import { LivenessStateMachine, angleDistance } from './liveness/liveness-state-machine.js'
+import { checkFlashMetrics, evaluateFlash, FlashSampler, lockCamera } from './liveness/flash-challenge.js'
 import { EyeCalibration, eyeAspectRatio } from './liveness/landmark-input.js'
 
 function frames() {
-  const logic = new Group4Logic(0); let now = 0, index = 0
+  const logic = new LivenessStateMachine(0); let now = 0, index = 0
   const frame = (values = {}) => { now += 34; index++; return logic.process({ count: 1, inFrame: true, timestamp: index, yaw: 0, pitch: 0, roll: 0, noseX: 100 + index * .2, noseY: 100, eyeRatio: .5, noseRatio: .5, eyeLeft: .95, eyeRight: .95, ...values }, now) }
   return { logic, frame, get now() { return now } }
 }
@@ -138,7 +138,7 @@ test('tracking: brief profile loss preserves the turn step; sustained loss and m
 })
 
 test('tracking: stable low frame rate is not treated as a fresh interruption at every frame', () => {
-  const logic = new Group4Logic(0)
+  const logic = new LivenessStateMachine(0)
   for (let i = 1; i <= 8; i++) {
     const state = logic.process({ timestamp: i * .3, count: 1, inFrame: true, calibrating: i <= 4,
       yaw: 0, pitch: 0, roll: 0, noseX: 100 + i, noseY: 100, eyeRatio: .5, noseRatio: .5, eyeLeft: 1, eyeRight: 1 }, i * 300)
@@ -158,11 +158,11 @@ test('flash: missing presentation or fresh frames times out and reports counts, 
 })
 
 test('watchdog: a fresh result after slow inference is not a camera stall; duplicate frames still stall', () => {
-  const logic = new Group4Logic(0)
+  const logic = new LivenessStateMachine(0)
   assert.notEqual(logic.process({ timestamp: .1, count: 0 }, 2200).state, 'failed')
   assert.equal(logic.lastFrameAt, 2200)
   assert.equal(logic.process({ timestamp: .1, count: 0 }, 4100).state, 'failed')
-  const expired = new Group4Logic(0)
+  const expired = new LivenessStateMachine(0)
   assert.equal(expired.process({ timestamp: 25.1, count: 1 }, 25100).state, 'failed')
 })
 

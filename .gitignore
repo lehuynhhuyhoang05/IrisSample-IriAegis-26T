@@ -4,3 +4,11 @@ dist/
 !.env.example
 test-results/
 playwright-report/
+
+# Ghi chú và kế hoạch cá nhân; không xóa khỏi máy.
+/GIAI-THICH-SRC-VA-CAU-HOI.md
+/HUONG-DAN-BOT-KIEM-TRA.md
+/ISSUE-TUAN-2.md
+/KE-HOACH-VA-ISSUE-TUAN-2.md
+/BAN-GIAO-FRONTEND.md
+/CODE-FLOW-WEEK-1.md

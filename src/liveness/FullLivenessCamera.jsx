@@ -5,9 +5,9 @@ import { detectionRegion } from '../face-detection.js'
 import { getCoverCrop } from '../camera-crop.js'
 import { getLivenessCrop } from './face-crop.js'
 import { predictLiveness } from './client.js'
-import { Group4Logic } from './group4-logic.js'
+import { LivenessStateMachine } from './liveness-state-machine.js'
 import { EyeCalibration, LANDMARK_MODEL, readLandmarks } from './landmark-input.js'
-import { FlashSampler, lockCamera, sampleFaceCore } from './group4-flash.js'
+import { FlashSampler, lockCamera, sampleFaceCore } from './flash-challenge.js'
 import logo from '../assets/android/ic_app_logo.png'
 import './full-liveness.css'
 
@@ -134,7 +134,7 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
     rt.challengeId = 0; rt.processingMs = 0; rt.lastObservedTime = -1
     rt.recoveryReadyAt = Infinity
     setPhoto(null); setResult(null); setError(''); setMetrics(null); setCameraLock(null); setFlashReport(null)
-    setStatus({ state: 'opening', message: 'Đang mở camera và tải module nhóm 4…' })
+    setStatus({ state: 'opening', message: 'Đang mở camera và tải mô hình liveness…' })
     try {
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('Camera cần HTTPS hoặc localhost và trình duyệt hỗ trợ camera.')
       const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } })
@@ -175,7 +175,7 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
         rt.delegate = 'CPU'
       }
       if (epoch !== rt.epoch) { model?.close(); return }
-      rt.model = model; rt.logic = new Group4Logic(performance.now()); rt.eyes = new EyeCalibration()
+      rt.model = model; rt.logic = new LivenessStateMachine(performance.now()); rt.eyes = new EyeCalibration()
       rt.lastAcceptedAt = performance.now()
       rt.canvas = initialCanvas; rt.fullCanvas = document.createElement('canvas')
       setStatus(rt.logic.snapshot())
@@ -300,8 +300,8 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
   return <div className={'app-shell full-liveness' + (embedded ? ' embedded-camera' : '')}>
     {!embedded && <header className="topbar"><div className="brand"><span className="brand-icon"><img src={logo} alt="" /></span><span>IriAegis</span></div><a href="#/app">Mở quản lý</a></header>}
     <Container className="main">{!embedded && <div className="heading"><h1>Xác thực khuôn mặt</h1><p>Chớp mắt, quay đầu, phản xạ ánh sáng và MiniVision</p></div>}
-      <section className="camera-card" aria-label="Liveness theo luồng nhóm 4">
-        {!running && !photo && <label className="full-liveness-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />Cho phép hai lượt sáng đỏ/xanh để đo phản xạ và gửi ảnh đến nhóm 4.</label>}
+      <section className="camera-card" aria-label="Kiểm tra liveness">
+        {!running && !photo && <label className="full-liveness-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />Cho phép hai lượt sáng đỏ/xanh để đo phản xạ và gửi ảnh đến dịch vụ liveness.</label>}
         <ol className="liveness-steps" aria-label="Các bước xác thực">{['Chớp mắt', 'Quay đầu', 'Ánh sáng', 'MiniVision'].map((label, i) => <li key={label} aria-current={stepNumber[status.state] === i + 1 ? 'step' : undefined}>{i + 1}. {label}</li>)}</ol>
         <div className={'viewport' + (photo ? ' has-photo' : '')}>
           <video ref={videoRef} autoPlay muted playsInline disablePictureInPicture className={hasCamera ? 'visible' : ''} />
@@ -314,11 +314,11 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
           <div className="actions">{running ? <button type="button" className="btn secondary" onClick={() => { releaseResources(); setStatus({ state: 'idle', message: 'Đã hủy xác thực' }); setPhoto(null); setResult(null); setError('') }}>Hủy xác thực</button> : <button type="button" className={'btn ' + (status.state === 'real' && onCapture ? 'secondary' : 'primary')} disabled={!consent} onClick={start}>{status.state === 'idle' ? <Camera size={18}/> : <RefreshCcw size={18}/>} {status.state === 'idle' ? 'Bắt đầu xác thực' : 'Xác thực lại'}</button>}</div>
         </div>
         {error && <p className="error" role="alert">{error}</p>}
-        {status.state === 'fake' && <p className="error" role="alert">Nhóm 4 trả FAKE. Không được sử dụng ảnh này.</p>}
+        {status.state === 'fake' && <p className="error" role="alert">Dịch vụ trả FAKE. Không được sử dụng ảnh này.</p>}
         {photo && onCapture && <button type="button" className="btn primary" disabled={status.state !== 'real'} onClick={() => { if (status.state === 'real' && result?.is_real) onCapture(photo, result) }}>Sử dụng ảnh này</button>}
         {cameraLock && (!cameraLock.exposure || !cameraLock.whiteBalance) && <p className="liveness-disclosure">Camera không xác nhận khóa đủ phơi sáng/cân bằng trắng. Vẫn đo phản xạ; chưa xác nhận tương đương phần cứng Android.</p>}
         <details className="liveness-details" open={showDetails} onToggle={event => setShowDetails(event.currentTarget.open)}><summary>Thông tin kiểm tra</summary>
-          <p>Luồng Web chuyển từ source nhóm 4; chưa đối sánh danh tính hoặc ràng buộc xác thực vào API điểm danh.</p>
+          <p>Luồng liveness trên Web; chưa đối sánh danh tính hoặc ràng buộc xác thực vào API điểm danh.</p>
           {metrics && <><p>EyeBlink: {metrics.blinkLeft?.toFixed(2) ?? '—'} / {metrics.blinkRight?.toFixed(2) ?? '—'} · Mắt mở: {metrics.calibrating ? 'đang hiệu chuẩn' : `${metrics.eyeLeft?.toFixed(2) ?? '—'} / ${metrics.eyeRight?.toFixed(2) ?? '—'}`} · {metrics.count} mặt</p><p>Góc quay/ngẩng/nghiêng: {metrics.yaw?.toFixed(1) ?? '—'}° / {metrics.pitch?.toFixed(1) ?? '—'}° / {metrics.roll?.toFixed(1) ?? '—'}°</p>{metrics.motion && <p>Chênh lệch frame: {metrics.motion.yaw.toFixed(1)}° / {metrics.motion.pitch.toFixed(1)}° / {metrics.motion.roll.toFixed(1)}° · {Math.round(metrics.motion.intervalMs)} ms</p>}</>}
           {metrics && <p>Xử lý: {metrics.delegate}{metrics.restartReason ? ` · Bắt đầu lại: ${metrics.restartReason}` : ''}</p>}
           {metrics?.frameSource && <p>Nguồn frame: {metrics.frameSource} · Suy luận: {Math.round(metrics.processingMs)} ms</p>}

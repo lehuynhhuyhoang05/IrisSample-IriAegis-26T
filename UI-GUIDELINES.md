@@ -2,7 +2,7 @@
 
 Phiên bản nền 0.1 · Trưởng nhóm duy trì · Áp dụng cho các màn hình Web tuần 2.
 
-**Cập nhật kết nối nhóm 1:** `/#/app` hiện mặc định dùng server; bản mock mở qua “Mở dữ liệu mẫu” ở đăng nhập. Thành viên đọc [rà soát UX và tích hợp server](DANH-GIA-UX-VA-TICH-HOP-SERVER.md), dùng `src/server/client.js`, hook tải dữ liệu và component chung khi phát triển. Không lấy password/vector từ localStorage để xác thực server và không dùng kết quả mock làm liveness thật.
+**Kết nối server:** `/#/app` dùng server. Thành viên dùng `src/server/client.js`, hook tải dữ liệu và component chung khi phát triển. Không lấy password/vector từ localStorage để xác thực server và không dùng kết quả giả lập làm liveness thật.
 
 **Quy chuẩn giao diện nghiệp vụ cập nhật:** đọc `DESIGN.md` và `AGENTS.md`. Portal dùng `src/portal/PortalShell.jsx`: trên mobile header gọn và tabbar dưới, menu phụ ở “Thêm”; từ 768px có sidebar. Các mô tả `AppShell` và breakpoint UI kit trong tài liệu này là mẫu thư viện, không thay thế bố cục portal. CSS sản phẩm nằm ở `src/portal/mobile-first.css`, nạp sau CSS nền. Không thêm đoạn giải thích dưới mọi tiêu đề hoặc đưa nguyên menu desktop lên đầu mobile.
 
@@ -33,7 +33,7 @@ Lấy địa chỉ Vite in trong terminal và thêm `/#/ui-kit`:
 - `/#/ui-kit/foundation`: bảng màu, typography, khoảng cách, icon và responsive.
 - `/#/ui-kit/guide`: hướng dẫn triển khai ngắn.
 - `/#/camera`: prototype camera gốc.
-- `/` hoặc `/#/app`: bản nghiệp vụ demo; xem [bàn giao frontend](BAN-GIAO-FRONTEND.md) để biết tài khoản, phạm vi và các điểm tích hợp.
+- `/` hoặc `/#/app`: ứng dụng nghiệp vụ kết nối server.
 
 Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu giả nằm trong state và có thể mất khi chuyển trang hoặc tải lại. Mẫu không triển khai đầy đủ nghiệp vụ sinh viên, quan hệ nhiều môn, phân quyền hay đối sánh khuôn mặt; không dùng nó làm đặc tả API. Không nhập thông tin thật.
 
@@ -165,9 +165,9 @@ Màn hình này phải được render trong `AppShell`. `required` diễn đạ
 
 ## 6. Camera và trạng thái nghiệp vụ
 
-Cập nhật Nhóm 4: đọc [TICH-HOP-LIVENESS-NHOM-4.md](TICH-HOP-LIVENESS-NHOM-4.md). `<CameraApp embedded livenessRequired onCapture={(image, result) => ...} />` chạy `FullLivenessCamera`: chớp mắt/quay đầu/flash chuyển từ Android nhóm 4, sau đó gọi MiniVision nhóm 4. Callback chỉ mở khi các lớp chủ động và phản xạ đạt, API trả REAL và người dùng chọn dùng ảnh. Không dùng REAL làm đối sánh danh tính hoặc tự thêm trường vào API nhóm 1. Trang `/#/camera/passive` chỉ để thử riêng API, không dùng `passiveOnly` tại màn nghiệp vụ.
+Cập nhật Nhóm 4: đọc [LIVENESS.md](LIVENESS.md). `<CameraApp embedded livenessRequired onCapture={(image, result) => ...} />` chạy `FullLivenessCamera`: chớp mắt/quay đầu/flash chuyển từ Android nhóm 4, sau đó gọi MiniVision nhóm 4. Callback chỉ mở khi các lớp chủ động và phản xạ đạt, API trả REAL và người dùng chọn dùng ảnh. Không dùng REAL làm đối sánh danh tính hoặc tự thêm trường vào API nhóm 1. Trang `/#/camera/passive` chỉ để thử riêng API, không dùng `passiveOnly` tại màn nghiệp vụ.
 
-Camera ở `App.jsx`, truy cập `/#/camera`; nhúng bằng `<CameraApp embedded livenessRequired onCapture={handlePhoto} />` cho luồng cần chống giả. Callback nhận JPEG data URL và phản hồi nhóm 4 khi người dùng bấm Sử dụng ảnh này. Khung oval, crop và xử lý Safari của prototype được giữ lại. Không tự mở một camera thứ hai trong màn hình nghiệp vụ. `portal/shared.jsx` có `PhotoField` và `FaceFlow` dùng lại camera; FaceFlow gọi liveness nhóm 4 khi chụp, còn đối sánh danh tính và ghi nhận demo vẫn là giả lập. Chỉ bỏ `livenessRequired` khi màn hình được xác định là chụp ảnh thông thường.
+Camera ở `App.jsx`, truy cập `/#/camera`; nhúng bằng `<CameraApp embedded livenessRequired onCapture={handlePhoto} />` cho luồng cần chống giả. Callback nhận JPEG data URL và phản hồi dịch vụ liveness khi người dùng bấm Sử dụng ảnh này. Không tự mở một camera thứ hai trong màn hình nghiệp vụ. Chỉ bỏ `livenessRequired` khi màn hình được xác định là chụp ảnh thông thường.
 
 Phải phân biệt “Đã phát hiện khuôn mặt”, “Đã đăng ký ảnh”, “Liveness thành công” và “Điểm danh thành công”. Đây là bốn ý nghĩa khác nhau. Không dùng trạng thái detector hiện tại làm kết quả xác thực. Dữ liệu mẫu phải có nhãn rõ.
 

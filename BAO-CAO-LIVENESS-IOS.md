@@ -58,4 +58,4 @@ Chuỗi số đo chỉ mô tả các frame được chấp nhận. Nó chưa đo
 
 Đã bổ sung điều kiện không đạt cụ thể và báo cáo RGB theo frame để điều tra. Giữ nguyên ngưỡng `0,280 / 0,040 / 0,040`, giữ phép AND và tiếp tục chặn sử dụng ảnh khi flash không đạt. Chưa xác nhận giải quyết việc từ chối người thật trên iPhone; cần số đo mới từ thiết bị thật.
 
-Tham khảo: [source Android nhóm 4](https://github.com/Long965/IrisSample-IriAegis-26T/tree/be89383530aa5845cf793a7cd4db90478f20f445), [tích hợp Web](TICH-HOP-LIVENESS-NHOM-4.md), [Apple: màu và độ sáng màn hình](https://support.apple.com/en-euro/109351), [Canvas: không gian màu](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData).
+Tham khảo: [source Android nhóm 4](https://github.com/Long965/IrisSample-IriAegis-26T/tree/be89383530aa5845cf793a7cd4db90478f20f445), [tích hợp Web](LIVENESS.md), [Apple: màu và độ sáng màn hình](https://support.apple.com/en-euro/109351), [Canvas: không gian màu](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData).

@@ -94,11 +94,14 @@ test('server: đăng nhập lỗi không dùng dữ liệu mẫu, ADMIN chỉ c�
   expect(state.writes.some(row => row.path === '/auth/refresh')).toBe(false)
 })
 
-test('demo: bấm điểm danh đưa form vào màn nhìn thấy, không còn danh sách chen bên dưới', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('aegis.data-mode', 'demo'))
-  await page.goto('/#/app/login'); await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Lịch dạy hôm nay' })).toBeVisible()
-  await page.goto('/#/app/attendance?course=WEB301'); await page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' }).getByRole('button', { name: 'Điểm danh', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Thông tin điểm danh', exact: true })).toBeFocused()
-  const box = await page.getByLabel('Mật khẩu điểm danh', { exact: false }).boundingBox(); expect(box.y).toBeGreaterThan(0); expect(box.y).toBeLessThan(650)
-  await expect(page.getByRole('table', { name: 'Danh sách điểm danh' })).toHaveCount(0)
+test('cấu hình demo cũ không thay thế server và không xóa dữ liệu đã lưu', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('aegis.data-mode', 'demo')
+    localStorage.setItem('iriaegis.business-demo.v1', 'saved-demo-data')
+  })
+  await page.goto('/#/app/login')
+  await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Mở dữ liệu mẫu' })).toHaveCount(0)
+  await expect(page.getByLabel('Email', { exact: false })).toHaveValue('')
+  expect(await page.evaluate(() => localStorage.getItem('iriaegis.business-demo.v1'))).toBe('saved-demo-data')
 })

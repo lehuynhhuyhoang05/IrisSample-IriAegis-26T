@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button, DataTable, EmptyState, Field, PageHeader } from '../ui'
 import { csvText, download } from '../portal/csv.js'
-import { today } from '../portal/domain.js'
+import { today } from './date.js'
 import { useServer } from './Session.jsx'
 import { useResource } from './hooks.js'
 import { queryString } from './client.js'

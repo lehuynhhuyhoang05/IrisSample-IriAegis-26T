@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Button, Dialog, EmptyState, LoadingState, Notice } from '../ui'
-import { useTask } from '../portal/Store.jsx'
+import { useTask } from './use-task.js'
 
 export function RequestError({ error }) {
   const ref = useRef(null)

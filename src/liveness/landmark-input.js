@@ -1,8 +1,8 @@
 import { detectionRegion, normalizeDetections } from '../face-detection.js'
-import { angleDistance } from './group4-logic.js'
+import { angleDistance } from './liveness-state-machine.js'
 
-// Model copied unchanged from group 4's server branch; see public/models/group4/README.md.
-export const LANDMARK_MODEL = '/models/group4/face_landmarker.task'
+// Model copied unchanged from group 4's server branch; see public/models/face-landmarker/README.md.
+export const LANDMARK_MODEL = '/models/face-landmarker/face_landmarker.task'
 const clamp = value => Math.min(1, Math.max(0, value))
 export function eyeAspectRatio(points, indices, width, height) {
   const eye = indices.map(index => points[index])

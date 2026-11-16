@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { fixture, login } from './server-fixture.js'
-import { fullCameraFixture, startFull, completeActive } from './group4-fixture.js'
+import { fullCameraFixture, startFull, completeActive } from './liveness-fixture.js'
 const real = { status: 'success', result: 'REAL', is_real: true, real_score: .83, spoof_score: .12, threshold_used: .108 }
 const fake = { ...real, result: 'FAKE', is_real: false, real_score: .01, spoof_score: .98 }
 async function attendance(page) {
@@ -29,7 +29,7 @@ test('full: blink, turns, measured flash, group4 multipart, use image; no automa
   expect(await page.evaluate(() => window.constraintWrites.some(row => row.advanced[0].exposureMode === 'continuous'))).toBe(true)
   await page.screenshot({ path: info.outputPath('full-liveness-completed.png'), fullPage: false })
   await page.getByRole('button', { name: 'Sử dụng ảnh này', exact: true }).click()
-  await expect(page.getByText('Nhóm 4: REAL', { exact: false })).toBeVisible()
+  await expect(page.getByText('Liveness: REAL', { exact: false })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Ghi nhận lên server', exact: true })).toBeDisabled()
   expect(state.writes.filter(row => row.path === '/attendance')).toHaveLength(0)
 })

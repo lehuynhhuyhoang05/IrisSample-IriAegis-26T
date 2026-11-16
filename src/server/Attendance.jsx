@@ -3,8 +3,8 @@ import { SubjectPicker } from './SubjectPicker.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { Badge, Button, DataTable, EmptyState, Field, PageHeader, SearchField } from '../ui'
 import CameraApp from '../App.jsx'
-import { useTask } from '../portal/Store.jsx'
-import { today } from '../portal/domain.js'
+import { useTask } from './use-task.js'
+import { today } from './date.js'
 
 import { useServer } from './Session.jsx'
 import { useResource, useStepFocus } from './hooks.js'
@@ -65,11 +65,11 @@ function AttendanceStep({ student, course, date, onBack }) {
     <div className="server-person-context"><strong>{student.full_name || student.student_id}</strong><span>{student.student_id} · {course} · {date.split('-').reverse().join('/')}</span></div>
     {step === 'camera' ? <><CameraApp embedded livenessRequired onCapture={(image, evidence) => { setPhoto(image); setLivenessEvidence(evidence); setConfirmed(false); setStep('review') }} /><Button variant="quiet" onClick={() => setStep('review')}>Hủy chụp</Button></> : step === 'done' ? <><Badge tone="success">Server đã xác nhận</Badge><dl className="server-details"><div><dt>Ngày</dt><dd>{result.checkin_date || date}</dd></div><div><dt>Giờ ghi nhận</dt><dd>{result.checkin_time || '—'}</dd></div></dl><div className="ui-actions"><Button onClick={onBack}>Điểm danh sinh viên khác</Button><a href={`#/app/reports?course=${encodeURIComponent(course)}&date=${date}`}>Xem lịch sử</a></div></> : <>
       <RequestError error={task.error} />
-      <Unavailable title="Điểm danh do giảng viên xác nhận">Liveness qua dịch vụ nhóm 4 đã có; đối sánh danh tính và liên kết kết quả này với API điểm danh nhóm 1 chưa được cung cấp.</Unavailable>
+      <Unavailable title="Điểm danh do giảng viên xác nhận">Liveness qua dịch vụ liveness đã có; đối sánh danh tính và liên kết kết quả này với API điểm danh nhóm 1 chưa được cung cấp.</Unavailable>
       {photo && <img className="server-photo" src={photo} alt="Ảnh vừa chụp, đang giữ trên thiết bị" />}
       <Button variant="secondary" disabled={task.busy} onClick={() => setStep('camera')}>{photo ? 'Chụp lại và kiểm tra liveness' : 'Chụp ảnh và kiểm tra liveness'}</Button>
       {photo && <p className="ui-hint">Ảnh đang ở trình duyệt; API điểm danh chưa nhận file ảnh.</p>}
-      {livenessEvidence?.is_real && <p className="ui-hint">Nhóm 4: REAL · Điểm {livenessEvidence.real_score}.{livenessEvidence.web_liveness?.active && ' Đã qua chớp mắt, quay đầu và phản xạ ánh sáng trên Web.'} Chưa đối sánh danh tính; kết quả không được tự gắn vào API điểm danh nhóm 1.</p>}
+      {livenessEvidence?.is_real && <p className="ui-hint">Liveness: REAL · Điểm {livenessEvidence.real_score}.{livenessEvidence.web_liveness?.active && ' Đã qua chớp mắt, quay đầu và phản xạ ánh sáng trên Web.'} Chưa đối sánh danh tính; kết quả không được tự gắn vào API điểm danh nhóm 1.</p>}
       <label className="portal-check server-consent"><input type="checkbox" checked={confirmed} disabled={task.busy} onChange={e => setConfirmed(e.target.checked)} />Tôi xác nhận sinh viên có mặt và ghi nhận thủ công.</label>
       <Button disabled={!confirmed} busy={task.busy} onClick={record}>{task.error ? 'Thử gửi lại cùng yêu cầu' : 'Ghi nhận lên server'}</Button>
       {attempt.current && <p className="ui-hint">Mã yêu cầu: {attempt.current.uuid}</p>}

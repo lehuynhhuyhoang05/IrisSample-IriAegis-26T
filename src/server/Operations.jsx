@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, DataTable, Dialog, EmptyState, Field, Notice, PageHeader } from '../ui'
-import { useTask } from '../portal/Store.jsx'
+import { useTask } from './use-task.js'
 import { useServer } from './Session.jsx'
 import { useResource } from './hooks.js'
 import { queryString } from './client.js'
@@ -8,7 +8,6 @@ import { ResourceState, RequestError, ServerConfirm, Unavailable } from './commo
 import { ConnectionForm } from './Auth.jsx'
 import { SubjectPicker } from './SubjectPicker.jsx'
 import { JobProgress } from './Jobs.jsx'
-import { changeMode } from './config.js'
 import { changePasswordBody, reportBody } from './contract.js'
 
 export function ServerEmail({ params }) {
@@ -49,7 +48,7 @@ export function ServerProfile({ required = false }) {
 }
 export function ServerSettings() {
   const [jobId, setJobId] = useState(''), [watch, setWatch] = useState('')
-  return <><PageHeader title="Kết nối" /><div className="server-narrow"><ConnectionForm /><section className="server-section"><h2>Tra cứu tác vụ</h2><form className="portal-form" onSubmit={e => { e.preventDefault(); setWatch(jobId.trim()) }}><Field label="Mã tác vụ CSV / email" value={jobId} required onChange={e => setJobId(e.target.value)} /><Button variant="secondary" type="submit">Xem tiến độ</Button></form>{watch && <JobProgress id={watch} />}</section><section className="server-section"><h2>Dữ liệu mẫu</h2><p>Mở lại các luồng giả lập để xem chức năng Android đang chờ API. Dữ liệu mẫu tách riêng khỏi server.</p><Button variant="secondary" onClick={() => changeMode('demo')}>Chuyển sang dữ liệu mẫu</Button></section></div></>
+  return <><PageHeader title="Kết nối" /><div className="server-narrow"><ConnectionForm /><section className="server-section"><h2>Tra cứu tác vụ</h2><form className="portal-form" onSubmit={e => { e.preventDefault(); setWatch(jobId.trim()) }}><Field label="Mã tác vụ CSV / email" value={jobId} required onChange={e => setJobId(e.target.value)} /><Button variant="secondary" type="submit">Xem tiến độ</Button></form>{watch && <JobProgress id={watch} />}</section></div></>
 }
 export function ServerHome() {
   const resource = useResource('/subjects' + queryString({ limit: 5, offset: 0 }))

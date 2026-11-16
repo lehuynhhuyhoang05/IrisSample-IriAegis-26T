@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, DataTable, Dialog, Field, Notice } from '../ui'
 import { useServer } from './Session.jsx'
-import { useTask } from '../portal/Store.jsx'
+import { useTask } from './use-task.js'
 import { RequestError } from './common.jsx'
 import { csvText, download, parseCSV } from '../portal/csv.js'
 

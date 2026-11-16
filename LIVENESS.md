@@ -40,12 +40,12 @@ Không có nút bỏ qua bước chủ động trong màn nghiệp vụ. Không 
 
 | Android nhóm 4 | File Web | Nội dung chuyển |
 |---|---|---|
-| `LivenessLogic.checkBlink()` | `src/liveness/group4-logic.js` | Ba frame mắt mở, hai mắt nhắm/mở, giới hạn đầu thẳng, kiểm tra thay đổi tư thế lúc chớp |
-| `check3DPerspective()`, `checkHeadShake()` | `group4-logic.js` | Quay hai phía ±11,5°, biến thiên tỷ lệ mắt ≥0,015 hoặc mũi ≥0,05; chính diện ±10°, giữ ba frame |
-| Kiểm tra frame đứng/cắt ghép | `group4-logic.js` | Ngưỡng Euler, mũi và mắt; 28 frame tĩnh hoặc 18 frame tĩnh rồi chuyển động; giới hạn nhảy yaw/pitch/roll |
-| `startSingleColorFlashChallenge()` | `src/liveness/group4-flash.js`, `FullLivenessCamera.jsx` | Baseline ít nhất 150 ms, đỏ/xanh ít nhất 500 ms mỗi màu; bỏ 150 ms đầu sau cập nhật màu, đủ ba frame mới mỗi pha, phục hồi 220 ms |
-| `calculateFaceCoreRGB()` | `group4-flash.js` | Vùng mặt co vào 22% mỗi cạnh, lấy mẫu RGB cách bốn pixel, không dùng toàn nền ảnh |
-| `evaluateRedBlueRatioCycle()` | `group4-flash.js` | Cùng công thức R/B, chromaticity, đối xứng baseline và ngưỡng chống cháy sáng |
+| `LivenessLogic.checkBlink()` | `src/liveness/liveness-state-machine.js` | Ba frame mắt mở, hai mắt nhắm/mở, giới hạn đầu thẳng, kiểm tra thay đổi tư thế lúc chớp |
+| `check3DPerspective()`, `checkHeadShake()` | `liveness-state-machine.js` | Quay hai phía ±11,5°, biến thiên tỷ lệ mắt ≥0,015 hoặc mũi ≥0,05; chính diện ±10°, giữ ba frame |
+| Kiểm tra frame đứng/cắt ghép | `liveness-state-machine.js` | Ngưỡng Euler, mũi và mắt; 28 frame tĩnh hoặc 18 frame tĩnh rồi chuyển động; giới hạn nhảy yaw/pitch/roll |
+| `startSingleColorFlashChallenge()` | `src/liveness/flash-challenge.js`, `FullLivenessCamera.jsx` | Baseline ít nhất 150 ms, đỏ/xanh ít nhất 500 ms mỗi màu; bỏ 150 ms đầu sau cập nhật màu, đủ ba frame mới mỗi pha, phục hồi 220 ms |
+| `calculateFaceCoreRGB()` | `flash-challenge.js` | Vùng mặt co vào 22% mỗi cạnh, lấy mẫu RGB cách bốn pixel, không dùng toàn nền ảnh |
+| `evaluateRedBlueRatioCycle()` | `flash-challenge.js` | Cùng công thức R/B, chromaticity, đối xứng baseline và ngưỡng chống cháy sáng |
 | `Camera.Parameters`/ML Kit | `src/liveness/landmark-input.js`, `FullLivenessCamera.jsx` | Thay bằng MediaPipe landmark và MediaStreamTrack; là phần chuyển nền tảng, không phải Java chạy trong browser |
 | `AntiSpoofHelper` | `src/liveness/client.js` → `main.py` nhóm 4 | Dùng MiniFASNetV2 `.pth` server thay runtime TFLite Android; giữ nguyên verdict/threshold từ server |
 | MobileFaceNet đối sánh 192 chiều | Chưa có API/runtime đối sánh Web trong phạm vi bàn giao | Không tự giả lập xác minh danh tính sau khi liveness đạt |
@@ -54,7 +54,7 @@ Ngưỡng quay đầu code Android là 11,5°; tài liệu nhận kèm ghi 15°.
 
 ### Đầu vào mắt và tư thế trên trình duyệt
 
-ML Kit không cung cấp SDK Java chạy trong trình duyệt. Web dùng [Face Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker?tab=Web) và chính file `.task` trong source server nhóm 4. File đặt tại `public/models/group4/face_landmarker.task`; checksum/nguồn nằm trong README cùng thư mục.
+ML Kit không cung cấp SDK Java chạy trong trình duyệt. Web dùng [Face Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker?tab=Web) và chính file `.task` trong source server nhóm 4. File đặt tại `public/models/face-landmarker/face_landmarker.task`; checksum/nguồn nằm trong README cùng thư mục.
 
 - Dùng ma trận tư thế để ước lượng yaw/pitch/roll; thứ tự/hướng trục khác nền tảng phải đánh giá lại trên thiết bị. Hướng dẫn yêu cầu quay hai phía nên không phụ thuộc việc preview lật gương đổi nghĩa trái/phải.
 - `eyeBlink` là hệ số biểu cảm, **không phải** xác suất mắt mở ML Kit. Bản trước đòi cả hai score ≥0,85 và quét thưa nên người dùng có thể kẹt ở bước 1/2.

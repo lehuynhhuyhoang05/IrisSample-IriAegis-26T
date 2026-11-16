@@ -1,10 +1,10 @@
 // Port of LivenessLogic.java, group 4 commit be89383530aa5845cf793a7cd4db90478f20f445.
 // Web adapter supplies normalized eye openness, pixel landmarks and Euler angles.
-export const GROUP4_LIMITS = Object.freeze({ eyeClosed: .15, eyeOpen: .75, left: -11.5, right: 11.5, center: 10, timeout: 25000 })
+export const LIVENESS_LIMITS = Object.freeze({ eyeClosed: .15, eyeOpen: .75, left: -11.5, right: 11.5, center: 10, timeout: 25000 })
 // Euler angles wrap at ±180°. Compare the shortest arc, not a raw subtraction.
 export const angleDistance = (a, b) => Math.abs(((a - b + 180) % 360 + 360) % 360 - 180)
 
-export class Group4Logic {
+export class LivenessStateMachine {
   constructor(now = 0) { this.started = now; this.lastFrameAt = now; this.lastTimestamp = -Infinity; this.cadence = []; this.state = 'waiting'; this.message = 'Nhìn thẳng vào camera'; this.resetProgress() }
   resetProgress() {
     this.openFrames = 0; this.closedFrames = 0; this.closed = false; this.blinkPose = null
@@ -16,7 +16,7 @@ export class Group4Logic {
   fail(message) { this.state = 'failed'; this.message = message; return this.snapshot() }
   tick(now, freshFrame = false) {
     if (['failed', 'active_passed'].includes(this.state)) return this.snapshot()
-    if (now - this.started >= GROUP4_LIMITS.timeout) return this.fail('Hết thời gian xác thực. Hãy thử lại.')
+    if (now - this.started >= LIVENESS_LIMITS.timeout) return this.fail('Hết thời gian xác thực. Hãy thử lại.')
     if (!freshFrame && now - this.lastFrameAt >= 1800) return this.fail('Video bị gián đoạn. Hãy mở lại camera.')
     return this.snapshot()
   }
