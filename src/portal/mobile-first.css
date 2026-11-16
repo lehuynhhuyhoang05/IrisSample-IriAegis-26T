@@ -1,16 +1,27 @@
 ﻿/* Mobile product layout: compact class lists, one action hierarchy, native form sheet. */
 .aegis-ui.portal-layout { display: block; background: var(--ui-surface); }
+.portal-layout .portal-account-initials { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ui-accent-bg); color: var(--ui-action); font-size: 12px; font-weight: 650; }
+.portal-layout .portal-nav-group > p { margin: 0 12px 6px; color: var(--ui-muted); font-size: 12px; font-weight: 500; }
+.portal-layout .portal-more-links .portal-nav-group { margin-top: 18px; }
+.portal-layout .portal-more-links .portal-nav-group:first-child { margin-top: 0; }
+.portal-layout .portal-more-links .portal-nav-group > p { margin-left: 0; }
+.portal-layout .portal-more-links a { border-bottom: 1px solid var(--ui-border); }
+.portal-layout .portal-more-links a:last-child { border: 0; }
+.portal-layout .portal-more-links a > svg { color: var(--ui-muted); }
+.portal-layout .ui-empty { text-align: left; padding: 28px 0; border-top: 0; }
+.portal-layout .ui-empty h3 { font-size: 16px; }
+.portal-layout .ui-empty p { max-width: 48ch; }
 .portal-layout .portal-body { min-width: 0; }
 .portal-layout .portal-rail { display: none; }
 .portal-layout .portal-logo { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; letter-spacing: -.4px; }
 .portal-layout .portal-logo img { width: 25px; height: 25px; }
-.portal-layout .portal-appbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; min-height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
+.portal-layout .portal-appbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; min-height: calc(58px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
 .portal-layout .portal-appbar-actions { display: flex; align-items: center; gap: 14px; }
 .portal-layout .portal-demo-tag { display: inline-flex; align-items: center; min-height: 44px; color: var(--ui-muted); font-size: 12px; }
 .portal-layout .portal-account-button { display: grid; place-items: center; border: 0; padding: 0; width: 44px; height: 44px; margin-right: -10px; background: transparent; color: var(--ui-text); }
-.portal-layout .ui-main { padding: 22px 20px calc(90px + env(safe-area-inset-bottom)); max-width: 1120px; margin: 0 auto; }
+.portal-layout .ui-main { padding: 26px 20px calc(96px + env(safe-area-inset-bottom)); max-width: 1120px; margin: 0 auto; }
 .portal-layout .ui-page-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-.portal-layout .ui-page-header h1 { font-size: 25px; font-weight: 650; letter-spacing: -.65px; line-height: 1.25; }
+.portal-layout .ui-page-header h1 { font-size: 30px; font-weight: 700; letter-spacing: -.85px; line-height: 1.25; }
 .portal-layout .ui-eyebrow { display: none; }
 .portal-layout .ui-description { font-size: 13px; line-height: 1.5; margin-top: 6px; }
 .portal-layout .ui-page-header > .ui-actions { margin: 0; flex-wrap: wrap; }
@@ -72,7 +83,7 @@
 .portal-layout .portal-person-link { display: block; }
 .portal-layout .ui-person strong { font-weight: 600; font-size: 15px; }
 .portal-layout .ui-person small { font-size: 12px; }
-.portal-layout .ui-initials { border-radius: 10px; width: 38px; height: 42px; background: var(--ui-accent-bg); font-size: 12px; font-weight: 500; }
+.portal-layout .ui-initials { border-radius: 50%; width: 36px; height: 36px; background: var(--ui-canvas); color: var(--ui-muted); font-size: 12px; font-weight: 600; border: 1px solid var(--ui-border); }
 .portal-layout .portal-help { margin-top: 24px; color: var(--ui-muted); font-size: 12px; line-height: 1.6; }
 .portal-layout .portal-help summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
 .portal-layout .portal-help p { margin-bottom: 16px; }
@@ -132,7 +143,7 @@
   .portal-layout .catalog .ui-table td[data-column=email] { display: none; }
   .portal-layout .catalog.courses .ui-table td[data-column=instructor], .portal-layout .catalog.courses .ui-table td[data-column=schedules], .portal-layout .catalog.courses .ui-table td[data-column=count] { grid-column: 1/-1; font-size: 12px; }
   .portal-layout .catalog.courses .ui-table td[data-column=instructor] { padding-top: 4px; }
-  .portal-layout .catalog.courses .portal-record-link strong { font-size: 15px; }
+  .portal-layout .catalog.courses .portal-record-link strong { font-size: 17px; line-height: 1.45; }
   .portal-layout .catalog.courses .ui-table td::before { min-width: 70px; }
   .portal-layout .catalog.courses .ui-table td[data-column=actions]::before { display: none; }
   .portal-layout .ui-list-footer .ui-button { font-size: 12px; }
@@ -144,25 +155,22 @@
 @media (min-width: 1024px) {
   .portal-layout .portal-mock-filters { grid-template-columns: 2fr 1fr; }
 }
-@media (min-width: 768px) and (max-width: 1023px) {
-  .portal-layout .ui-page-header { flex-wrap: wrap; }
-}
 @media (min-width: 768px) {
   .aegis-ui.portal-layout { display: grid; grid-template-columns: 216px minmax(0,1fr); }
   .portal-layout .portal-rail { display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh; background: var(--ui-canvas); border-right: 1px solid var(--ui-border); padding: 28px 16px 20px; overflow-y: auto; }
   .portal-layout .portal-rail > .portal-logo { margin: 0 10px 36px; }
-  .portal-layout .portal-rail nav { display: flex; flex-direction: column; gap: 3px; }
-  .portal-layout .portal-rail nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px; color: var(--ui-muted); font-size: 13px; border-radius: 7px; }
-  .portal-layout .portal-rail nav a[aria-current=page] { background: var(--ui-accent-bg); color: var(--ui-action); font-weight: 600; }
+  .portal-layout .portal-rail nav { display: flex; flex-direction: column; gap: 24px; }
+  .portal-layout .portal-rail nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; color: var(--ui-muted); font-size: 14px; border-radius: 6px; }
+  .portal-layout .portal-rail nav a[aria-current=page] { background: var(--ui-accent-bg); color: var(--ui-action); font-weight: 650; box-shadow: inset 3px 0 var(--ui-action); }
   .portal-layout .portal-rail-account { margin-top: auto; padding: 24px 10px 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
   .portal-layout .portal-rail-account small { color: var(--ui-muted); font-size: 12px; }
   .portal-layout .portal-rail-account button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--ui-muted); font-size: 13px; }
-  .portal-layout .portal-appbar { min-height: 56px; padding: 0 32px; justify-content: flex-end; }
+  .portal-layout .portal-appbar { min-height: 48px; padding: 0 32px; justify-content: flex-end; }
   .portal-layout .portal-appbar > .portal-logo { display: none; }
   .portal-layout .portal-tabbar { display: none; }
-  .portal-layout .ui-main { padding: 32px 36px 48px; }
+  .portal-layout .ui-main { padding: 36px 40px 56px; }
   .portal-layout .ui-page-header { flex-wrap: nowrap; }
-  .portal-layout .ui-page-header h1 { font-size: 28px; }
+  .portal-layout .ui-page-header h1 { font-size: 32px; }
   .portal-layout .ui-dialog { width: min(560px,calc(100% - 48px)); }
   .portal-layout .portal-session-row { grid-template-columns: 64px minmax(0,1fr) auto; gap: 24px; align-items: center; }
   .portal-layout .portal-session-row > .ui-button { grid-column: 3; grid-row: 1; }
@@ -178,4 +186,22 @@
   .portal-layout .attendance-list .ui-table td[data-column=status], .portal-layout .attendance-list .ui-table td[data-column=time] { grid-column: 1; padding-left: 50px; font-size: 12px; }
   .portal-layout .attendance-list .ui-table td[data-column=status]::before, .portal-layout .attendance-list .ui-table td[data-column=time]::before { display: none; }
   .portal-layout .attendance-list .ui-button { font-size: 12px; padding-inline: 10px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .portal-layout .ui-page-header { flex-wrap: wrap; }
+  .portal-layout .ui-main { padding-inline: 28px; }
+}
+@media (max-width: 767px) {
+  .portal-layout .portal-tabbar [aria-current=page]::before { content: ''; position: absolute; top: 0; height: 3px; width: 24px; border-radius: 0 0 2px 2px; background: currentColor; }
+  .portal-layout .portal-tabbar a, .portal-layout .portal-tabbar button { position: relative; padding-top: 8px; font-size: 11px; }
+  .portal-layout .portal-tabbar svg { width: 24px; height: 24px; }
+  .portal-layout .ui-dialog { width: 100%; max-width: 100%; max-height: calc(var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top) - 16px); bottom: var(--dialog-keyboard-offset, 0px); margin: auto 0 0; border: 0; border-radius: 20px 20px 0 0; }
+  .portal-layout .ui-dialog-heading { padding: 20px; }
+  .portal-layout .ui-dialog-footer { border-top: 1px solid var(--ui-border); }
+  .portal-layout .ui-dialog::backdrop { background: #172d354d; }
+  .portal-layout .catalog.courses .ui-table td::before { display: none; }
+  .portal-layout .catalog.courses .ui-table td[data-column=instructor] { color: var(--ui-muted); padding-top: 8px; }
+  .portal-layout .catalog.courses .ui-table td[data-column=count]::after { content: ' sinh viên'; margin-left: -6px; color: var(--ui-muted); }
+  .portal-layout .catalog.courses .ui-table tbody tr { padding-block: 22px; }
 }

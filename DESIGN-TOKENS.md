@@ -26,4 +26,4 @@ Các thành phần hiện tại của prototype vẫn có màu, kích thước v
 - `src/assets/android/ic_warning.svg`: chuyển path từ `ic_warning.xml` sang SVG, dùng trong thông báo lỗi.
 - `src/android-theme.css`: áp dụng gradient, màu, radius và nút dựa trên `colors.xml`, `styles.xml`, `gradient_background.xml` và `button_secondary.xml`. Màu nút chính được điều chỉnh đậm hơn trên Web để chữ trắng dễ đọc; không phải bản sao pixel của Android.
 
-Những icon còn lại của nút camera vẫn dùng Lucide. Đây là một theme sáng lấy cảm hứng từ Android, không phải các theme sáng/tối có sẵn từ source Android.
+Icon thao tác camera và portal dùng SVG riêng tại `src/ui/icons.js`. Đây là một theme sáng lấy cảm hứng từ Android, không phải các theme sáng/tối có sẵn từ source Android.

@@ -44,7 +44,7 @@ Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu 
 - `app/src/main/res/values/colors.xml`: mint `#66CFCF`, chữ chính `#263238`, bề mặt trắng và các nhóm màu trạng thái.
 - `styles.xml`: phân cấp nút chính/phụ/xóa, form có nhãn và các kích thước tham khảo. Không chuyển dp/sp sang CSS một cách tuyệt đối.
 - `activity_student_list.xml`: danh sách sinh viên, tìm kiếm, hành động thêm và xuất dữ liệu làm cơ sở cho màn hình tham chiếu.
-- `ic_app_logo.png`: sử dụng logo nguyên bản. Icon thao tác dùng Phosphor, import qua `src/ui/icons.js` để giữ một hệ icon thống nhất. Các SVG Android khác vẫn nằm trong source camera nhưng không bắt buộc chèn vào mọi màn hình.
+- `ic_app_logo.png`: sử dụng logo nguyên bản. Icon thao tác dùng SVG riêng của IriAegis, import qua `src/ui/icons.js` để giữ một hệ icon thống nhất. Các SVG Android khác vẫn nằm trong source camera nhưng không bắt buộc chèn vào mọi màn hình.
 
 ### Điều chỉnh cho Web
 
@@ -52,7 +52,7 @@ Mẫu sinh viên chỉ dùng để minh họa cách tổ chức UI. Dữ liệu 
 - Font hệ thống: `-apple-system`, `BlinkMacSystemFont`, `Segoe UI`, `sans-serif`. Không giả định Android có một font thương hiệu đã thống nhất.
 - Nền trắng hoặc xám rất nhạt, đường phân cách rõ. Không dùng gradient trang trí, nền phát sáng, hero lớn hoặc các card KPI không liên quan công việc.
 - Một vùng chính cho một tác vụ. Không bọc mọi đoạn nội dung bằng card và không lồng card chỉ để trang trí.
-- Không dùng emoji thay icon chức năng. Icon cỡ 18–20 px, `weight="regular"`, đi cùng chữ nếu ý nghĩa không rõ.
+- Không dùng emoji thay icon chức năng. Icon cỡ 18–24 px, đi cùng chữ nếu ý nghĩa không rõ. Không import một thư viện icon khác cho từng màn hình.
 - Câu chữ ngắn, đúng hành động: “Thêm sinh viên”, “Lưu môn học”, “Giữ lại”. Không dùng “Tiếp tục” cho mọi nút nếu người dùng cần biết thao tác cụ thể.
 
 ## 3. Cấu trúc và quyền sở hữu file
@@ -119,7 +119,7 @@ Trong UI kit hiện tại, các import này đã được xử lý bởi `main.j
 | `EmptyState` | `title`, `children`, `action` | Nêu lý do và thao tác tiếp theo nếu có. |
 | `LoadingState` | `label` | Nội dung đang tải có `role="status"`. |
 | `PageHeader` | `eyebrow`, `title`, `description`, `actions` | Mỗi trang một `h1`; eyebrow không bắt buộc. |
-| `Dialog` | `open`, `onClose`, `title`, `description`, `children`, `footer` | Native `<dialog>`, đóng bằng Escape/nút; Tab/Shift+Tab trong hộp thoại; không đóng khi bấm nền để tránh mất form. |
+| `Dialog` | `open`, `onClose`, `title`, `description`, `children`, `footer` | Native `<dialog>`, sheet trên mobile, theo visualViewport khi bàn phím hiện; đóng bằng Escape/nút; Tab/Shift+Tab trong hộp thoại; không đóng khi bấm nền để tránh mất form. |
 | `DataTable` | `caption`, `columns`, `rows`, `rowKey`, `empty`, `variant` | `columns: [{key, label, render?}]`, `rowKey` mặc định `id`, phải duy nhất. Render nhận cả row. Cột đầu là thông tin chính trên mobile. |
 | `AppShell` | `items`, `activeId`, `children`, `brandSubtitle`, `navigationLabel`, `context`, `badge`, `footer` | Item có `{id, href, label, icon}`. Nhãn mặc định dành cho thư viện; truyền nội dung tương ứng khi dựng màn nghiệp vụ, không sửa cứng component. `footer={null}` ẩn nội dung footer mẫu. |
 

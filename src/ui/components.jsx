@@ -49,7 +49,7 @@ export function Notice({ tone = 'info', title, children, onDismiss }) {
 }
 
 export function EmptyState({ title, children, action }) {
-  return <div className="ui-empty"><Search size={26} aria-hidden="true" /><h3>{title}</h3><p>{children}</p>{action}</div>
+  return <div className="ui-empty"><h3>{title}</h3>{children && <p>{children}</p>}{action}</div>
 }
 
 export function LoadingState({ label = 'Đang tải dữ liệu…' }) {
@@ -75,7 +75,20 @@ export function Dialog({ open, onClose, title, description, children, footer }) 
     if (!open) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    const viewport = window.visualViewport
+    const fitViewport = () => {
+      if (!viewport || viewport.scale > 1.05) return
+      dialog.style.setProperty('--dialog-viewport-height', `${viewport.height}px`)
+      dialog.style.setProperty('--dialog-keyboard-offset', `${Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)}px`)
+    }
+    fitViewport()
+    viewport?.addEventListener('resize', fitViewport)
+    viewport?.addEventListener('scroll', fitViewport)
     return () => {
+      viewport?.removeEventListener('resize', fitViewport)
+      viewport?.removeEventListener('scroll', fitViewport)
+      dialog.style.removeProperty('--dialog-viewport-height')
+      dialog.style.removeProperty('--dialog-keyboard-offset')
       document.body.style.overflow = previousOverflow
       if (dialog.open) dialog.close()
       if (returnTarget?.isConnected && returnTarget !== document.body && !dialog.contains(returnTarget)) returnTarget.focus({ preventScroll: true })

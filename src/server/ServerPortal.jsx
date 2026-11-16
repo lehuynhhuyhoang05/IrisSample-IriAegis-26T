@@ -30,7 +30,7 @@ function Content({ path }) {
   else if (page === 'settings') content = <ServerSettings />
   else if (['home', 'login', 'forgot', 'reset', ''].includes(page)) content = <ServerHome />
   else content = <><PageHeader title="Chức năng chưa khả dụng" /><Unavailable title="Chưa có API tương ứng">Sao lưu/khôi phục, mống mắt và một số thao tác quản trị chưa có hợp đồng Web REST. Các thao tác này sẽ được bổ sung khi có hợp đồng API phù hợp.</Unavailable></>
-  return <PortalShell items={nav.map(([id, label, icon]) => ({ id, label, icon, href: `#/app/${id}` }))} activeId={page} actor={{ ...actor, name: actor.full_name }} onLogout={() => { task.setError(''); setLeaving(true) }}>
+  return <PortalShell mode="server" items={nav.map(([id, label, icon]) => ({ id, label, icon, href: `#/app/${id}` }))} activeId={page} actor={{ ...actor, name: actor.full_name }} onLogout={() => { task.setError(''); setLeaving(true) }}>
     <div ref={main} key={page}>{content}</div>
     {leaving && <Dialog open title="Đăng xuất?" onClose={() => { if (!task.busy) setLeaving(false) }} footer={<><Button variant="secondary" disabled={task.busy} onClick={() => setLeaving(false)}>Hủy</Button><Button busy={task.busy} onClick={() => task.run(logout)}>Đăng xuất</Button></>}><RequestError error={task.error} />{task.error && <><p>Chưa xác nhận thu hồi token trên server. Bạn vẫn có thể xóa phiên khỏi trình duyệt này.</p><Button variant="secondary" onClick={clearSession}>Chỉ xóa phiên trên thiết bị</Button></>}</Dialog>}
   </PortalShell>
