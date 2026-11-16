@@ -7,6 +7,7 @@ import './ui/tokens.css'
 import './ui/ui.css'
 import './portal/portal.css'
 import './portal/mobile-first.css'
+import './portal/workspace-layout.css'
 
 export default function Workspace() {
   const [path, setPath] = useState(window.location.hash)

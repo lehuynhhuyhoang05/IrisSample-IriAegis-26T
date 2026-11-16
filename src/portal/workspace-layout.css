@@ -1,0 +1,110 @@
+/* Mobile workspace: class context first, people second. Shared by local and API modes. */
+.aegis-ui.portal-layout { background: var(--ui-canvas); }
+.portal-layout .portal-appbar { background: var(--ui-brand); }
+.portal-layout .ui-main { padding-top: 20px; }
+.portal-layout .ui-page-header { margin-bottom: 18px; gap: 8px; }
+.portal-layout .ui-page-header h1 { font-size: 24px; line-height: 1.3; letter-spacing: -.45px; font-weight: 650; }
+.portal-layout .ui-page-header > .ui-actions { width: auto; margin-left: auto; }
+.portal-layout .ui-page-header > .ui-actions .ui-button { font-size: 13px; }
+.portal-layout .ui-input { background: #fff; }
+.portal-layout select.ui-input { height: 44px; padding-block: 0; }
+.portal-layout .portal-tabs { overflow-x: auto; gap: 18px; }
+.portal-layout .portal-tabs button { white-space: nowrap; }
+.portal-layout .portal-session-row { background: #fff; border: 1px solid var(--ui-border); border-radius: 10px; padding: 18px 16px; margin-top: 12px; }
+.portal-layout .portal-session-time { border-right: 1px solid var(--ui-border); padding-right: 12px; }
+.portal-layout .portal-session-body h3 { font-size: 17px; }
+.portal-layout .portal-progress { height: 4px; }
+.portal-layout .portal-session-row > .ui-button { background: var(--ui-action); color: #fff; border-color: transparent; }
+.portal-layout .portal-today > .portal-section-heading { margin-bottom: 4px; }
+.portal-layout .portal-section-heading h2 { font-size: 16px; }
+.portal-layout .ui-toolbar { padding-bottom: 12px; }
+.portal-layout .ui-search .ui-input { background: #fff; border-color: var(--ui-border); }
+.portal-layout .catalog, .portal-layout .server-directory { background: #fff; padding-inline: 14px; border: 1px solid var(--ui-border); border-radius: 10px; }
+.portal-layout .catalog .ui-table tbody tr, .portal-layout .server-directory .ui-table tbody tr { background: transparent; }
+.portal-layout .portal-section, .portal-layout .portal-profile { scroll-margin-top: 72px; }
+.portal-layout .ui-notice { margin-bottom: 16px; }
+.portal-layout .ui-dialog .ui-field label { font-size: 13px; }
+.portal-layout .session-context { display: flex; width: 100%; gap: 12px; align-items: center; justify-content: space-between; padding: 16px; border: 1px solid var(--ui-border); border-left: 3px solid var(--ui-action); border-radius: 8px; background: #fff; color: var(--ui-text); text-align: left; font: inherit; cursor: pointer; }
+.portal-layout .session-context > span:first-child { min-width: 0; }
+.portal-layout .session-context strong { display: block; font-size: 16px; font-weight: 600; line-height: 1.45; }
+.portal-layout .session-context small { display: block; margin-top: 5px; color: var(--ui-muted); font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.portal-layout .session-context-edit { flex: none; display: flex; align-items: center; gap: 2px; font-size: 13px; color: var(--ui-action); }
+.portal-layout .session-picker { display: grid; gap: 16px; }
+.portal-layout .session-picker .portal-filter-grid { display: grid; grid-template-columns: minmax(0,1fr); margin: 0; }
+.portal-layout .attendance-progress { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; margin: 12px 0; font-size: 12px; color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+.portal-layout .attendance-progress strong { color: var(--ui-text); font-size: 14px; }
+.portal-layout .attendance-progress progress { width: 100%; grid-column: 1/-1; height: 4px; border: 0; border-radius: 2px; overflow: hidden; background: var(--ui-border); color: var(--ui-action); accent-color: var(--ui-action); }
+.portal-layout progress::-webkit-progress-bar { background: var(--ui-border); }
+.portal-layout progress::-webkit-progress-value { background: var(--ui-action); }
+.portal-layout progress::-moz-progress-bar { background: var(--ui-action); }
+.portal-layout .attendance-list-controls { display: grid; gap: 6px; margin-bottom: 10px; }
+.portal-layout .attendance-status-filters { display: flex; gap: 4px; overflow-x: auto; }
+.portal-layout .attendance-status-filters button { font: inherit; font-size: 12px; line-height: 1.3; min-height: 44px; padding: 8px 10px; border: 0; background: transparent; color: var(--ui-muted); white-space: nowrap; border-bottom: 2px solid transparent; cursor: pointer; }
+.portal-layout .attendance-status-filters [aria-pressed=true] { color: var(--ui-action); border-bottom-color: var(--ui-action); font-weight: 650; }
+.portal-layout .attendance-roster { border: 1px solid var(--ui-border); border-radius: 10px; background: #fff; padding-inline: 14px; }
+.portal-layout .attendance-receipt { display: inline-flex; gap: 5px; align-items: center; color: var(--ui-success); font-size: 11px; line-height: 1.45; white-space: nowrap; }
+.portal-layout .attendance-receipt > span { display: grid; text-align: right; }
+.portal-layout .attendance-receipt time { color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+.portal-layout .attendance-count { margin: 12px 0; color: var(--ui-muted); font-size: 12px; }
+@media (min-width: 768px) {
+  .portal-layout .ui-page-header h1 { font-size: 28px; }
+  .portal-layout .attendance-workspace { max-width: 940px; margin-inline: auto; }
+  .portal-layout .session-context { padding: 18px 20px; }
+  .portal-layout .attendance-roster { padding-inline: 0; }
+}
+@media (max-width: 767px) {
+  .portal-layout .portal-appbar { min-height: calc(52px + env(safe-area-inset-top)); }
+  .portal-layout .portal-logo { font-size: 16px; }
+  .portal-layout .ui-main { padding: 18px 16px max(24px, env(safe-area-inset-bottom)); }
+  .portal-layout .ui-page-header h1 { font-size: 23px; }
+  .portal-layout .attendance-workspace .ui-page-header { margin-bottom: 12px; }
+  .portal-layout .attendance-workspace .session-context { padding: 12px 14px; }
+  .portal-layout .ui-page-header > .ui-actions { gap: 4px; }
+  .portal-layout .ui-page-header > .ui-actions .ui-button { padding-inline: 8px; }
+  .portal-layout .attendance-roster .ui-table tbody tr { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 4px 8px; padding: 14px 0; min-height: 82px; }
+  .portal-layout .attendance-roster .ui-table td.ui-cell-main { grid-column: 1; grid-row: 1; padding: 0; }
+  .portal-layout .attendance-roster .ui-table td[data-column=status] { grid-column: 1; grid-row: 2; padding: 0 0 0 44px; font-size: 11px; }
+  .portal-layout .attendance-roster .ui-table td[data-column=actions] { grid-column: 2; grid-row: 1 / span 2; align-self: center; justify-content: flex-end; padding: 0; }
+  .portal-layout .attendance-roster .ui-table td::before { display: none; }
+  .portal-layout .attendance-roster .ui-person { gap: 8px; align-items: flex-start; }
+  .portal-layout .attendance-roster .ui-person strong { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  .portal-layout .attendance-roster .ui-person small { margin-top: 3px; font-size: 11px; }
+  .portal-layout .attendance-roster .ui-initials { width: 36px; height: 36px; border: 0; background: var(--ui-canvas); }
+  .portal-layout .attendance-roster .ui-badge { font-size: 11px; background: transparent; padding: 0; }
+  .portal-layout .attendance-roster .ui-button { min-height: 44px; padding: 8px 10px; font-size: 12px; background: var(--ui-accent-bg); color: var(--ui-action); border: 0; }
+  .portal-layout .attendance-workspace .server-search { margin: 14px 0 12px; }
+  .portal-layout .attendance-workspace .server-search .ui-button { padding-inline: 10px; font-size: 13px; }
+  .portal-layout .catalog.courses .ui-table tbody tr { padding-block: 16px; }
+  .portal-layout .catalog.courses .portal-record-link strong { font-size: 15px; }
+  .portal-layout .catalog.courses .ui-table td[data-column=instructor], .portal-layout .catalog.courses .ui-table td[data-column=schedules], .portal-layout .catalog.courses .ui-table td[data-column=count] { font-size: 12px; }
+}
+
+/* Navigation follows the supplied left-drawer reference; no mobile bottom bar. */
+.portal-layout .portal-menu-button { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 0 0 12px; border: 0; border-left: 1px solid #26323833; background: transparent; color: var(--ui-text); font: inherit; font-size: 13px; cursor: pointer; }
+.portal-layout .portal-drawer.ui-dialog { position: fixed; inset: 0 auto 0 0; width: min(82vw, 320px); max-width: none; height: 100dvh; max-height: var(--dialog-viewport-height, 100dvh); margin: 0; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); border: 0; border-radius: 0; box-shadow: none; background: var(--ui-surface); overflow-y: auto; }
+.portal-layout .portal-drawer::backdrop { background: var(--android-colorOverlay); }
+.portal-layout .portal-drawer .ui-dialog-heading { position: sticky; top: 0; z-index: 1; align-items: center; padding: 20px 18px; background: var(--ui-surface); }
+.portal-layout .portal-drawer .ui-dialog-heading .portal-logo { display: flex; font-size: 23px; gap: 8px; }
+.portal-layout .portal-drawer .ui-dialog-body { padding: 0; }
+.portal-layout .portal-drawer-links details { border-bottom: 1px solid var(--ui-border); }
+.portal-layout .portal-drawer-links summary { display: flex; justify-content: space-between; align-items: center; list-style: none; min-height: 50px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.portal-layout .portal-drawer-links summary::-webkit-details-marker { display: none; }
+.portal-layout .portal-drawer-links details[open] > summary { color: var(--ui-action); }
+.portal-layout .portal-drawer-links details[open] > summary svg { transform: rotate(90deg); }
+.portal-layout .portal-drawer-links a { display: flex; align-items: center; min-height: 46px; padding: 10px 20px 10px 32px; font-size: 15px; color: var(--ui-text); border-top: 1px solid var(--ui-border); }
+.portal-layout .portal-drawer-links a > svg { display: none; }
+.portal-layout .portal-drawer-links a[aria-current=page] { background: var(--android-colorPrimaryLight); color: var(--ui-text); font-weight: 600; }
+.portal-layout .portal-drawer .portal-menu-account { padding: 20px; border: 0; }
+.portal-layout .portal-drawer .portal-more-tools { margin: 0; padding: 0 20px 16px; }
+.portal-layout .portal-report-summary { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 8px 0 20px; padding: 12px 0; border-block: 1px solid var(--ui-border); font-size: 13px; }
+.portal-layout .portal-report-summary > div { display: flex; align-items: baseline; gap: 8px; }
+.portal-layout .portal-report-summary dt { color: var(--ui-muted); }
+.portal-layout .portal-report-summary dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.portal-layout .portal-file-help { margin-block: 12px; color: var(--ui-muted); font-size: 13px; }
+.portal-layout .portal-file-help summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
+.portal-layout .portal-file-help p { margin-bottom: 16px; line-height: 1.6; }
+@media (min-width: 768px) {
+  .portal-layout .portal-rail { background: var(--ui-surface); }
+  .portal-layout .portal-rail nav a[aria-current=page] { background: var(--android-colorPrimaryLight); color: var(--ui-text); box-shadow: inset 3px 0 var(--android-colorPrimaryDark); }
+  .portal-layout .portal-menu-button { display: none; }
+}

@@ -18,6 +18,7 @@ import MockAttendance from './MockAttendance.jsx'
 import Biometrics from './Biometrics.jsx'
 import { Dialog } from '../ui'
 import { readMode } from '../server/config.js'
+import './workspace-layout.css'
 
 function Content({ path }) {
   const { actor, logout, flash, setFlash } = usePortal(), [leaving, setLeaving] = useState(false)

@@ -1,6 +1,5 @@
 ﻿/* Mobile product layout: compact class lists, one action hierarchy, native form sheet. */
 .aegis-ui.portal-layout { display: block; background: var(--ui-surface); }
-.portal-layout .portal-account-initials { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ui-accent-bg); color: var(--ui-action); font-size: 12px; font-weight: 650; }
 .portal-layout .portal-nav-group > p { margin: 0 12px 6px; color: var(--ui-muted); font-size: 12px; font-weight: 500; }
 .portal-layout .portal-more-links .portal-nav-group { margin-top: 18px; }
 .portal-layout .portal-more-links .portal-nav-group:first-child { margin-top: 0; }
@@ -38,9 +37,6 @@
 .portal-layout .ui-search .ui-input { background: var(--ui-canvas); border-color: transparent; }
 .portal-layout input[type=date], .portal-layout input[type=time] { appearance: none; -webkit-appearance: none; min-width: 0; width: 100%; text-align: left; }
 .portal-layout input::-webkit-date-and-time-value { text-align: left; }
-.portal-layout .portal-tabbar { position: fixed; z-index: 30; bottom: 0; inset-inline: 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); padding: 5px max(8px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left)); border-top: 1px solid var(--ui-border); background: var(--ui-surface); }
-.portal-layout .portal-tabbar a, .portal-layout .portal-tabbar button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; background: transparent; color: var(--ui-muted); min-height: 48px; font-size: 11px; padding: 0; font-weight: 500; }
-.portal-layout .portal-tabbar [aria-current=page] { color: var(--ui-action); font-weight: 650; }
 .portal-layout .portal-menu-account { display: flex; flex-direction: column; gap: 4px; padding-bottom: 20px; border-bottom: 1px solid var(--ui-border); }
 .portal-layout .portal-menu-account strong { font-size: 17px; }
 .portal-layout .portal-menu-account span { font-size: 13px; color: var(--ui-muted); }
@@ -104,14 +100,6 @@
 .portal-layout .embedded-camera .btn.primary { background: var(--ui-action); border-radius: 8px; }
 .portal-layout .portal-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; }
 .portal-layout .portal-check input { width: 19px; height: 19px; accent-color: var(--ui-action); flex: none; }
-.portal-layout .portal-report-chart { margin: 0 0 24px; padding: 16px 0; max-width: 600px; }
-.portal-layout .portal-report-chart figcaption { margin-bottom: 12px; font-size: 14px; font-weight: 600; }
-.portal-layout .portal-chart-row { display: grid; grid-template-columns: 65px minmax(0,1fr) 28px; align-items: center; gap: 12px; margin-top: 9px; font-size: 13px; }
-.portal-layout .portal-chart-row strong { font-weight: 500; text-align: right; }
-.portal-layout .portal-chart-track { background: var(--ui-canvas); height: 8px; overflow: hidden; border-radius: 3px; }
-.portal-layout .portal-chart-track > span { display: block; height: 100%; background: var(--ui-success); }
-.portal-layout .portal-chart-row.warning .portal-chart-track > span { background: var(--ui-warning); }
-.portal-layout .portal-chart-row.danger .portal-chart-track > span { background: var(--ui-danger); }
 .portal-layout .portal-backup-actions { display: flex; justify-content: flex-end; }
 /* A task-focused login, no marketing artwork or cards. */
 .aegis-ui.portal-auth { display: block; background: var(--ui-surface); }
@@ -167,7 +155,6 @@
   .portal-layout .portal-rail-account button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--ui-muted); font-size: 13px; }
   .portal-layout .portal-appbar { min-height: 48px; padding: 0 32px; justify-content: flex-end; }
   .portal-layout .portal-appbar > .portal-logo { display: none; }
-  .portal-layout .portal-tabbar { display: none; }
   .portal-layout .ui-main { padding: 36px 40px 56px; }
   .portal-layout .ui-page-header { flex-wrap: nowrap; }
   .portal-layout .ui-page-header h1 { font-size: 32px; }
@@ -193,9 +180,6 @@
   .portal-layout .ui-main { padding-inline: 28px; }
 }
 @media (max-width: 767px) {
-  .portal-layout .portal-tabbar [aria-current=page]::before { content: ''; position: absolute; top: 0; height: 3px; width: 24px; border-radius: 0 0 2px 2px; background: currentColor; }
-  .portal-layout .portal-tabbar a, .portal-layout .portal-tabbar button { position: relative; padding-top: 8px; font-size: 11px; }
-  .portal-layout .portal-tabbar svg { width: 24px; height: 24px; }
   .portal-layout .ui-dialog { width: 100%; max-width: 100%; max-height: calc(var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top) - 16px); bottom: var(--dialog-keyboard-offset, 0px); margin: auto 0 0; border: 0; border-radius: 20px 20px 0 0; }
   .portal-layout .ui-dialog-heading { padding: 20px; }
   .portal-layout .ui-dialog-footer { border-top: 1px solid var(--ui-border); }

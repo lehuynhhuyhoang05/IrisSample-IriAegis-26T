@@ -7,8 +7,8 @@
   --ui-text: var(--android-colorTextPrimary);
   --ui-muted: #53666e;
   --ui-surface: var(--android-colorSurface);
-  --ui-canvas: #f7f9f8;
-  --ui-border: #dbe3e0;
+  --ui-canvas: var(--android-colorBackground);
+  --ui-border: var(--android-colorDivider);
   --ui-control-border: #81958e;
   --ui-success: #27633e;
   --ui-success-bg: var(--android-colorSuccessLight);

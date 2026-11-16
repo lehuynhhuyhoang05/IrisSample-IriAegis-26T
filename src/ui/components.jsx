@@ -1,5 +1,7 @@
-import { useEffect, useId, useRef } from 'react'
-import { AlertCircle, CheckCircle2, Info, LoaderCircle, Search, X } from './icons'
+import { useEffect, useId, useImperativeHandle, useRef } from 'react'
+import { AlertCircle, CalendarDays, CheckCircle2, Info, LoaderCircle, Search, X } from './icons'
+import { animateOverlay, cancelOverlayMotion } from './motion.js'
+import './motion.css'
 
 export function Button({ variant = 'primary', icon: Icon, busy = false, disabled, children, className = '', type = 'button', onClick, ...props }) {
   return <button {...props} type={type} onClick={event => {
@@ -22,11 +24,13 @@ export function Field({ label, hint, error, as = 'input', options = [], id: prov
   const id = providedId || generatedId
   const Control = as
   const description = error || hint
+  const dateControl = as === 'input' && props.type === 'date'
+  const control = <Control {...props} id={id} required={required} data-ui-autofocus={props.autoFocus || undefined} className="ui-input" aria-invalid={error ? true : undefined} aria-describedby={description ? `${id}-description` : undefined}>
+    {as === 'select' ? options.map(option => <option key={option.value} value={option.value}>{option.label}</option>) : undefined}
+  </Control>
   return <div className={`ui-field ${className}`}>
     <label htmlFor={id}>{label}{required && <span className="ui-required"> *</span>}</label>
-    <Control {...props} id={id} required={required} data-ui-autofocus={props.autoFocus || undefined} className="ui-input" aria-invalid={error ? true : undefined} aria-describedby={description ? `${id}-description` : undefined}>
-      {as === 'select' ? options.map(option => <option key={option.value} value={option.value}>{option.label}</option>) : undefined}
-    </Control>
+    {dateControl ? <div className="ui-date-control">{control}<span aria-hidden="true">{props.value ? props.value.split('-').reverse().join('/') : 'dd/mm/yyyy'}<CalendarDays size={18} /></span></div> : control}
     {description && <p id={`${id}-description`} className={error ? 'ui-field-error' : 'ui-hint'}>{description}</p>}
   </div>
 }
@@ -61,8 +65,9 @@ export function PageHeader({ eyebrow, title, description, actions }) {
 }
 
 // Native modal makes the background inert; wrap Tab at the boundaries explicitly.
-export function Dialog({ open, onClose, title, description, children, footer }) {
+export function Dialog({ open, onClose, title, description, children, footer, className = '', dismissOnBackdrop = false, dialogRef }) {
   const ref = useRef(null)
+  useImperativeHandle(dialogRef, () => ref.current, [])
   const id = useId()
   useEffect(() => {
     const dialog = ref.current
@@ -84,7 +89,9 @@ export function Dialog({ open, onClose, title, description, children, footer }) 
     fitViewport()
     viewport?.addEventListener('resize', fitViewport)
     viewport?.addEventListener('scroll', fitViewport)
+    animateOverlay(dialog)
     return () => {
+      cancelOverlayMotion(dialog)
       viewport?.removeEventListener('resize', fitViewport)
       viewport?.removeEventListener('scroll', fitViewport)
       dialog.style.removeProperty('--dialog-viewport-height')
@@ -103,7 +110,11 @@ export function Dialog({ open, onClose, title, description, children, footer }) 
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
   }
-  return <dialog ref={ref} className="ui-dialog" aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined} onKeyDown={handleKeyDown} onCancel={event => { event.preventDefault(); onClose() }}>
+  return <dialog ref={ref} className={`ui-dialog ${className}`} aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined} onKeyDown={handleKeyDown} onClick={event => {
+    if (!dismissOnBackdrop || event.target !== event.currentTarget) return
+    const bounds = event.currentTarget.getBoundingClientRect()
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose()
+  }} onCancel={event => { event.preventDefault(); onClose() }}>
     <div className="ui-dialog-heading"><div><h2 id={`${id}-title`}>{title}</h2>{description && <p id={`${id}-description`}>{description}</p>}</div><IconButton icon={X} label="Đóng hộp thoại" onClick={onClose} /></div>
     <div className="ui-dialog-body">{children}</div>
     {footer && <div className="ui-dialog-footer">{footer}</div>}

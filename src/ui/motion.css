@@ -1,0 +1,16 @@
+/* Short feedback for opening, expanding and pressing; no page-load choreography. */
+.aegis-ui .ui-dialog[data-motion-phase=opening]::backdrop { animation: overlay-fade-in var(--overlay-motion-duration, 140ms) ease-out both; }
+.aegis-ui .ui-dialog[data-motion-phase=closing]::backdrop { animation: overlay-fade-out var(--overlay-motion-duration, 160ms) ease-in both; }
+.aegis-ui .ui-dialog[data-motion-phase=closing] > * { pointer-events: none; }
+.portal-layout .portal-drawer-links details > div { overflow: hidden; }
+.portal-layout .portal-drawer-links summary svg { transition: transform 180ms cubic-bezier(.22,1,.36,1); }
+.portal-layout .ui-button, .portal-layout .portal-menu-button { transition: background-color 120ms ease, opacity 100ms ease, transform 100ms ease; }
+.portal-layout .ui-button:active:not(:disabled) { transform: translateY(1px); }
+.portal-layout .portal-menu-button:active { opacity: .65; }
+@keyframes overlay-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .aegis-ui .ui-dialog::backdrop { animation: none !important; }
+  .portal-layout .portal-drawer-links summary svg, .portal-layout .ui-button, .portal-layout .portal-menu-button { transition: none; }
+  .portal-layout .ui-button:active:not(:disabled) { transform: none; }
+}
