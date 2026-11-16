@@ -1,53 +1,63 @@
 # Thiết kế IriAegis Web
 
-## Hướng giao diện
+## Nguồn quy chuẩn
 
-Ứng dụng công việc cho giảng viên: nội dung ngắn, danh sách rõ, thao tác trực tiếp. Mobile là một bố cục riêng. Tham chiếu nghiệp vụ và nhận diện Android; không chuyển layout desktop xuống điện thoại bằng cách thu nhỏ.
+Nhận diện lấy từ app Android, các token gốc ở `src/android-tokens.css`. Dùng ảnh menu IriTech do trưởng nhóm cung cấp để định hướng điều hướng mobile: header, nút menu và drawer bên trái. Không sao chép nội dung marketing hoặc chuyển ứng dụng thành landing page.
 
-## Token và hình thức
+- Giữ mint `#66CFCF`, teal `#3BA8A8`, nền `#F5FAFA`, mặt phẳng trắng và chữ `#263238` của Android.
+- Biến ngữ nghĩa `--ui-*` ở `src/ui/tokens.css` ánh xạ tới tài nguyên Android. Màu nút/link teal đậm `#236E69` giữ tương phản chữ. Không tự đổi toàn bộ sang navy, xanh dương hoặc một bộ nhận diện mới.
+- Font hệ thống, dấu tiếng Việt đầy đủ. Không tải font/thư viện icon mới chỉ để trang trí. Giữ logo Android và bộ SVG hiện có.
+- Không gradient trang trí, card lồng card, shadow trên mọi khối, banner giải thích thường trực hoặc chữ kỹ thuật đặt vào tác vụ người dùng.
 
-- Nền trắng, chữ `#263238`, hành động `#236E69`, mint nhận diện `#66CFCF`; dùng biến `--ui-*` ở `src/ui/tokens.css`.
-- Font hệ thống: iOS dùng San Francisco qua `-apple-system`; Windows dùng Segoe UI. Không tải Inter/Roboto hoặc font trang trí.
-- Khoảng cách 4/8/12/16/20/24/32/40. Bo góc control 8px, dialog 12px. Bóng chỉ cho overlay.
-- Icon SVG riêng qua `src/ui/icons.js`, lưới 24px, nét 1,7px; mục đang chọn tăng độ đậm. Các hình sổ lớp/lịch học/thẻ hồ sơ diễn đạt nghiệp vụ. Giữ logo Android; không emoji chức năng hoặc thư viện icon mới.
-- Không gradient trang trí, glassmorphism, glow, card lồng card, KPI/hero không có nhu cầu nghiệp vụ.
+## Bố cục điều hướng
 
-## Nội dung
+`src/portal/PortalShell.jsx` là shell dùng chung cho demo và server.
 
-- Tiêu đề là tên tác vụ: Môn học, Sinh viên, Điểm danh. Không eyebrow lặp lại, slogan hoặc đoạn hướng dẫn mặc định dưới mỗi tiêu đề.
-- Một nhãn Demo nhỏ dẫn đến thông tin/kịch bản. Cảnh báo giả lập tại bước xác thực/gửi khi cần; không lặp banner dài trên mọi màn hình.
-- Chỉ hiện giải thích tại thao tác có rủi ro hoặc lúc người dùng cần quyết định. Nội dung kỹ thuật dài đặt trong tài liệu hoặc phần mở rộng.
+- Trên điện thoại: header mint, logo bên trái, nhãn môi trường nhỏ và nút Menu bên phải. Không có tabbar cố định phía dưới.
+- Menu mở từ trái, nền trắng, chiếm tối đa 320px và 82% màn hình; nền trang còn lại mờ. Các nhóm Lớp học/Quản lý/Công cụ/Tài khoản có thể thu/mở. Mục đang chọn dùng nền mint nhạt. Không thêm icon trang trí vào từng dòng menu mobile.
+- Menu giữ đủ đường dẫn theo quyền, có thể cuộn; đóng bằng nút X, Escape, chạm ngoài hoặc chọn chức năng. Đóng menu trả focus về nút mở. Nền trang không thể thao tác khi menu đang mở.
+- Từ 768px: sidebar trắng, chữ đậm vừa phải, nhóm chức năng và mục đang chọn mint. Không dùng sidebar navy.
+- Nội dung không bị ép thành phiên bản thu nhỏ của desktop. Khoảng chạm tối thiểu 44px; input ít nhất 16px; không khóa zoom, không tràn ngang.
 
-## Mobile và iOS
+## Nội dung và trạng thái
 
-- Header khoảng 56px + safe area; thanh dưới có Hôm nay/Môn học/Điểm danh/Báo cáo/Thêm. Chức năng phụ ở menu, không chiếm đầu màn hình.
-- Lề ngang 20px; nội dung chính xuất hiện ngay sau header. Thanh dưới dùng `env(safe-area-inset-bottom)` và phần nội dung có chừa khoảng tránh bị che.
-- Input tối thiểu 16px, vùng chạm tối thiểu 44px, không tắt zoom. Date/time/select không được làm rộng viewport.
-- Danh sách là các hàng có phân cách, không là chuỗi thẻ trang trí. Form một cột, trừ các trường ngắn có quan hệ trực tiếp.
-- Hộp thoại mobile mở từ dưới lên, cuộn nội dung và giữ footer; theo visualViewport khi bàn phím mở. Giữ focus, Escape và trả focus về nút mở. Camera giữ oval và video inline.
+- Tiêu đề dùng tên tác vụ, không slogan/eyebrow hoặc đoạn hướng dẫn lặp dưới từng tiêu đề.
+- Nhãn Demo/Server ở header cho biết môi trường. Không lặp banner giải thích dữ liệu thử trên mọi trang.
+- Bỏ banner tĩnh ở sao lưu/điểm danh thử và luồng face. Nút/xác nhận vẫn ghi rõ thao tác giả lập, không trình bày kết quả demo là kết quả server.
+- Báo cáo hiển thị tổng Đúng giờ/Muộn/Vắng bằng nhãn và số cùng hàng, tự xuống dòng khi cần. Không có thanh bar màu, thẻ KPI hoặc icon cho ba tổng này.
+- Giữ lỗi thật, kết quả tác vụ, xác nhận xóa/khôi phục và trạng thái thiếu dịch vụ/thiết bị tại đúng vị trí cần xử lý.
+- Thông tin kỹ thuật sao lưu đặt trong mục mở rộng. Hướng dẫn tích hợp/giới hạn model đặt trong tài liệu, không lặp trong giao diện chính.
 
-## Vòng kiểm tra bắt buộc
+## Màn điểm danh và form
 
-Chụp và mở ảnh đăng nhập, hôm nay, danh sách, form đang mở, điểm danh và menu ở 390px và 1440px. Kiểm tra thêm 360px/768px, nội dung dài, safe area, bàn phím. Chạy Chromium và WebKit nếu có; ghi riêng phần chưa kiểm tra trên iPhone thật. Thấy menu chiếm màn hình đầu, chữ bị ép vụn, hoặc nút tác vụ bị che thì phải sửa dù test logic vẫn đạt.
+Tên môn/ngày/ca hiển thị gọn; nút Đổi mở bảng chọn buổi học. Người đã được ghi nhận hiển thị giờ và trạng thái, không dùng nút disabled thay kết quả. Có bộ lọc Tất cả/Chưa ghi nhận/Đã ghi nhận và tìm theo tên/mã.
 
-## Hướng thiết kế cập nhật 16/11/2026
+Ngày hiển thị dd/mm/yyyy một dòng; input native vẫn giữ label, value ISO, required/min/max và bộ chọn ngày trình duyệt. Không format lại payload gửi server.
 
-Ứng dụng dành cho giảng viên quản lý lớp: hình ảnh gợi sổ lớp, lịch học và hồ sơ. Điểm nhấn là thứ tự đọc và glyph theo nghiệp vụ, không phải hiệu ứng.
+Form có nhãn, lỗi cạnh trường, trạng thái chờ; modal giữ focus, vùng cuộn và nút lưu theo visualViewport khi mở bàn phím. Camera giữ oval và video inline. Việc sửa bố cục không thay đổi thuật toán liveness, quyền hoặc API.
 
-- Palette: nền trắng #FFFFFF, chữ #263238, hành động #236E69, nền nhẹ #F7F9F8, đường phân cách #DBE3E0, mint nhận diện #66CFCF. Không thêm accent trang trí.
-- Typography: font hệ thống để giữ dấu tiếng Việt và hành vi iOS; tiêu đề 30px mobile/32px desktop, tên lớp 17px mobile; metadata nhỏ hơn và không lặp tên trường trên từng dòng.
-- Bố cục desktop: điều hướng phân nhóm Lớp học/Quản lý/Công cụ/Tài khoản; vùng nội dung theo tác vụ. Không biến trang hôm nay thành dashboard chỉ số.
-- Bố cục iPhone: 5 vị trí điều hướng ổn định, trạng thái đang chọn rõ; danh sách đọc theo tên → giảng viên → lịch → sĩ số; sheet có vùng cuộn và nút lưu trong vùng nhìn.
-- Duyệt thiết kế: một hệ icon; giữ nhãn chữ cho thao tác khó đoán; không thêm thẻ/gradient/slogan; kiểm tra screenshot trước/sau và thao tác khi bàn phím hiện.
+## Kiểm tra
 
-## Skill và nguồn tham khảo
+Chụp và mở ảnh home, danh sách lớp, điểm danh, báo cáo, sao lưu và menu tại 390px; thêm 360/768/1440px, nội dung dài và bàn phím. Kiểm tra theme Android, menu bên trái, thu/mở nhóm, backdrop, Escape và trả focus. Không sửa file trong lúc Playwright đang chạy để tránh Vite tải lại giữa ca.
 
-Đã cài và đọc [frontend-design của Anthropic](https://github.com/anthropics/skills/tree/main/skills/frontend-design). Áp dụng cách xuất phát từ nội dung thật, lập hướng thiết kế, kiểm tra screenshot và bỏ phần trang trí không phục vụ tác vụ. Skill cài ở phạm vi Codex người dùng, không chép phụ thuộc vào repository.
+Test WebKit mô phỏng không xác nhận Safari iPhone thật. Test API/liveness dùng fixture kiểm tra hợp đồng và điều phối, không đánh giá độ chính xác model hoặc backend thực tế.
 
-Đã tham khảo [Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars), [Sheets](https://developer.apple.com/design/human-interface-guidelines/sheets) và [Lists and tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables) của Apple. Đây là Web responsive cho cả Android/iPhone, không dùng SF Symbols hoặc tự nhận là giao diện native iOS.
+## Tài liệu triển khai
 
-SVG trong source được vẽ riêng; không lấy từ SF Symbols, Lucide, Phosphor hoặc thư viện ảnh. Glyph cần được kiểm tra ở đúng 18/20/24px; không chỉ phóng lớn để đánh giá.
+Đọc `UI-GUIDELINES.md` cho cách dùng component. CSS sản phẩm dùng `src/portal/mobile-first.css` và `src/portal/workspace-layout.css`; tránh thêm override màu riêng ở từng màn. Skill frontend-design hỗ trợ quy trình xem/sửa ảnh, không thay thế yêu cầu nhận diện do trưởng nhóm chốt.
 
-## Kiểm tra sau thay đổi giao diện
+Kết quả đợt điều chỉnh theo ảnh trưởng nhóm: Chrome desktop/mobile 108/108 ca và WebKit 54/54 ca đạt ở lượt chạy đầy đủ. Đã xem ảnh menu trái, báo cáo không bar màu, sao lưu không banner và màn điểm danh. Đây vẫn là kiểm thử trình duyệt tự động; chưa xác nhận bản mới trên iPhone thật.
 
-Đợt 16/11 đã chạy đủ 98 bài Chrome desktop/mobile và 49 bài WebKit. WebKit phát hiện nút mở menu chưa nhận focus khi chạm; đã sửa và chạy lại cả ba bài menu/bàn phím/nhãn môi trường, đều đạt. 57 bài Node, lint và build đạt. Bài bàn phím giả lập visualViewport thu nhỏ để kiểm tra vị trí nút lưu; không phải thao tác trên bàn phím iPhone thật. Các kiểm thử API/liveness dùng fixture theo hợp đồng, không đánh giá độ chính xác model thực tế.
+## Chuyển động tương tác
+
+- Menu mở từ trái trong 220ms, đóng trong 160ms; nền mờ chuyển cùng menu. Không bật nảy hoặc scale cả trang.
+- Khi đóng, giữ native dialog và khóa nền tới hết chuyển động, sau đó trả focus. Chọn đường dẫn hoặc đăng xuất đóng menu xong mới thực hiện bước tiếp theo; không gọi tác vụ hai lần khi bấm liên tiếp.
+- Nhóm menu thu/mở 180ms, đảo hướng từ chiều cao hiện tại nếu bấm nhanh. Hộp thoại thường hiện nhẹ 140ms; nút phản hồi khi nhấn, không có hiệu ứng chạy trên mọi thẻ/dòng.
+- Tôn trọng prefers-reduced-motion: bỏ chuyển vị trí và animation, vẫn thao tác đầy đủ. Không thêm motion vào video, oval, đo flash hoặc pipeline liveness.
+- Code chung ở src/ui/motion.js và motion.css. Không cài thêm thư viện animation; giữ nguyên màu, font, bố cục Android đã chốt.
+
+## Trình bày camera cho người dùng
+
+Mặc định cả dev lẫn bản build hiển thị màn camera gọn: ngữ cảnh người cần xác thực, oval, một lời nhắc theo bước, đồng ý dùng ánh sáng/gửi ảnh và nút thao tác. Bỏ các hàng tiến trình lặp, tên model, điểm số, trạng thái phần cứng và mô tả API khỏi màn chính.
+
+Thông tin kỹ thuật và kịch bản không camera chỉ bật khi đang dùng Vite dev và có VITE_CAMERA_DIAGNOSTICS=true hoặc localStorage aegis.camera-diagnostics=true. Bản production luôn bỏ các công cụ này kể cả trình duyệt còn lưu cờ từ lúc dev. Kết quả/phản hồi thật vẫn được kiểm tra, lỗi vẫn cho thử lại; không nới ngưỡng hoặc bỏ bước liveness. Chế độ Demo tiếp tục ghi rõ đối sánh mô phỏng, không biến thành xác thực danh tính thật bằng cách thay nhãn.

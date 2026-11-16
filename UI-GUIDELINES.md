@@ -4,7 +4,7 @@ Phiên bản nền 0.1 · Trưởng nhóm duy trì · Áp dụng cho các màn h
 
 **Dữ liệu:** `/#/app` hỗ trợ server và dữ liệu mẫu để kiểm thử giao diện. Thành viên dùng `src/server/client.js`, hook tải dữ liệu và component chung cho các màn server. Không lấy password/vector từ localStorage để xác thực server và không dùng kết quả giả lập làm liveness thật.
 
-**Quy chuẩn giao diện nghiệp vụ cập nhật:** đọc `DESIGN.md` và `AGENTS.md`. Portal dùng `src/portal/PortalShell.jsx`: trên mobile header gọn và tabbar dưới, menu phụ ở “Thêm”; từ 768px có sidebar. Các mô tả `AppShell` và breakpoint UI kit trong tài liệu này là mẫu thư viện, không thay thế bố cục portal. CSS sản phẩm nằm ở `src/portal/mobile-first.css`, nạp sau CSS nền. Không thêm đoạn giải thích dưới mọi tiêu đề hoặc đưa nguyên menu desktop lên đầu mobile.
+**Quy chuẩn giao diện nghiệp vụ cập nhật:** đọc `DESIGN.md` và `AGENTS.md`. Portal dùng `src/portal/PortalShell.jsx`: trên mobile có header mint và menu trượt từ trái, không có tabbar dưới; từ 768px có sidebar trắng. Các mô tả `AppShell` và breakpoint UI kit trong tài liệu này là mẫu thư viện, không thay thế bố cục portal. CSS sản phẩm dùng `src/portal/mobile-first.css` và `src/portal/workspace-layout.css`; lớp workspace nạp cuối, giữ nhận diện mint/teal và token Android cho cả chế độ demo và server. Không thêm đoạn giải thích dưới mọi tiêu đề hoặc đưa nguyên menu desktop lên đầu mobile.
 
 ## 1. Mở bộ mẫu
 
@@ -174,7 +174,7 @@ Phải phân biệt “Đã phát hiện khuôn mặt”, “Đã đăng ký ả
 ## 7. Responsive, bàn phím và nội dung
 
 - Desktop từ 900 px: navigation trái, nội dung có giới hạn chiều rộng.
-- Dưới 900 px: navigation chuyển thành hàng liên kết, không dùng drawer che nội dung nếu chưa cần.
+- Trong UI kit, navigation mẫu có thể xuống hàng; portal nghiệp vụ dùng drawer bên trái trên mobile theo `PortalShell.jsx`, không sao chép navigation mẫu để thay shell.
 - Dưới 640 px: bảng mẫu thành các hàng dạng danh sách có nhãn, form một cột. Với bảng báo cáo nhiều số liệu cần trao đổi mẫu responsive riêng, không áp dụng máy móc.
 - Chữ trong input trên mobile tối thiểu 16 px. Mục tiêu vùng chạm của nút là 44 px. Focus bàn phím phải nhìn rõ.
 - Nhãn form luôn hiển thị, không dùng placeholder thay nhãn. Báo lỗi cạnh trường, giữ dữ liệu sau lỗi. Nút chờ có `busy` để tránh gửi lại.
@@ -221,3 +221,9 @@ import { Button } from '../ui'
 // Tên export là alias chung; không import lại Lucide ở màn riêng.
 <Button icon={Plus} onClick={openForm}>Thêm sinh viên</Button>
 ```
+
+## Mẫu màn điểm danh trên iPhone
+
+Dùng `src/ui/SessionContext.jsx` để đưa lựa chọn buổi vào sheet; màn chính chỉ hiển thị tên môn/ngày/ca và nút Đổi. Không đưa lại ba ô chọn lớn lên đầu danh sách. Sinh viên đã ghi nhận hiển thị trạng thái và giờ, không dùng nút disabled thay kết quả.
+
+Field type=date đi qua component `Field` có trình bày dd/mm/yyyy một dòng và input native phủ lên để mở bộ chọn iOS. Không format lại value gửi server; value vẫn là YYYY-MM-DD. Không tắt zoom trình duyệt hoặc giảm input xuống dưới 16px để nén bố cục.

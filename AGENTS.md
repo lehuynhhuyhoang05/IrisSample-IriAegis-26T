@@ -8,3 +8,5 @@
 - Sau khi sửa, dùng Playwright chụp màn thật, mở ảnh và sửa vấn đề nhìn thấy. Test không tràn ngang chưa đủ để kết luận giao diện tốt.
 - Ghi đúng môi trường đã kiểm thử. WebKit tự động không tương đương Safari iPhone thật.
 - Ghi cải thiện ngoài nghiệp vụ Android là đề xuất; không tự thêm nghiệp vụ hoặc quy tắc backend.
+
+- Nhận diện bắt buộc theo Android mint/teal; không tự thay palette. Mobile dùng menu bên trái theo ảnh trưởng nhóm cung cấp, không thêm tabbar dưới. Báo cáo dùng nhãn/số gọn, không vẽ bar màu cho ba tổng trạng thái.

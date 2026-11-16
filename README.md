@@ -2,7 +2,7 @@
 
 **Liveness nhóm 4:** [LIVENESS.md](LIVENESS.md). Đã chuyển luồng Android sang Web: chớp mắt → quay hai phía → đo flash đỏ/xanh → API MiniVision. Thử tại `/#/camera` hoặc bước điểm danh. Backend nhóm 4 chạy cổng 8000, proxy `/liveness-api`. Cần thử camera/iPhone thật để xác nhận chất lượng; chưa có đối sánh danh tính hoặc bằng chứng do server nhóm 1 xác minh.
 
-**Tình huống iPhone người thật không đạt flash:** [báo cáo và hướng thu số đo](BAO-CAO-LIVENESS-IOS.md). Hiện chưa xác nhận khắc phục trên thiết bị thật. Sau bước ánh sáng có thể tải JSON số đo trong Thông tin kiểm tra; công thức/ngưỡng nhóm 4 không bị nới để cho qua.
+**Tình huống iPhone người thật không đạt flash:** [báo cáo và hướng thu số đo](BAO-CAO-LIVENESS-IOS.md). Hiện chưa xác nhận khắc phục trên thiết bị thật. Khi lỗi sau bước ánh sáng, bấm **Lưu thông tin lỗi** để tải `iriaegis-camera-support.json`, kể cả không bật debug. File chứa số đo của tối đa 5 lượt đo ánh sáng gần nhất trong trang, gồm cả lượt đạt/không đạt; không chứa ảnh, video, tài khoản hoặc token. Không tải lại trang giữa các lượt nếu cần đối chiếu. Công thức/ngưỡng nhóm 4 không bị nới để cho qua.
 
 **Đối chiếu API mới nhất:** [DOI-CHIEU-API-SERVER.md](DOI-CHIEU-API-SERVER.md) — ma trận 38 operation Web, các phần thiếu đã bổ sung, giới hạn và mâu thuẫn trong YAML. Chạy `npm.cmd run audit:api` để xem ma trận.
 
@@ -17,6 +17,14 @@ Trình duyệt gọi `/api/v1` qua proxy Vite; đích mặc định `http://loca
 ## Dữ liệu nghiệp vụ
 
 Ứng dụng có chế độ kết nối server và chế độ dữ liệu mẫu để kiểm thử giao diện. Tại màn đăng nhập chọn **Mở dữ liệu mẫu**, sau đó đăng nhập `super@demo.test` hoặc `lan@demo.test` với mật khẩu `Demo@123`. Mật khẩu điểm danh mẫu là `123456`. Dữ liệu mẫu lưu trên trình duyệt, tách biệt với server.
+
+### Bố cục trên điện thoại
+
+Giao diện giữ màu mint/teal từ Android. Trên điện thoại, nút **Menu** mở điều hướng bên trái với các nhóm có thể thu/mở; không có thanh tab cố định dưới. Chạm ngoài menu hoặc nút X để đóng.
+
+Màn điểm danh ưu tiên danh sách lớp. Chạm vùng tên môn hoặc **Đổi** để chọn môn/ngày/ca trong bảng chọn; **Xem danh sách lớp** đóng bảng và quay về danh sách theo lựa chọn mới. Các nút **Chưa ghi nhận** và **Đã ghi nhận** lọc danh sách; sinh viên đã ghi nhận hiển thị giờ thay cho nút bị vô hiệu hóa. **Nhập mã sinh viên** vẫn mở luồng nhập mã.
+
+Ngày hiển thị `dd/mm/yyyy`, vẫn dùng bộ chọn ngày của trình duyệt. Quy chuẩn triển khai nằm trong [DESIGN.md](DESIGN.md) và [UI-GUIDELINES.md](UI-GUIDELINES.md). Khi thử trên Safari iPhone thật, kiểm tra thêm bộ chọn ngày, thanh trình duyệt co/giãn và bàn phím; ảnh chụp WebKit tự động không thay thế các thao tác này.
 
 ### Kiểm thử UI bằng dữ liệu mẫu
 
@@ -133,3 +141,14 @@ Giữ terminal mở; sao chép đường dẫn `https://...trycloudflare.com` m�
 Các màu mint, nền và màu chữ lấy từ `app/src/main/res/values/colors.xml` của ứng dụng Android; bố cục Web được thiết kế lại cho màn hình lớn và điện thoại.
 
 Danh sách token đã trích xuất và lưu ý chuyển đổi Android → Web: [DESIGN-TOKENS.md](DESIGN-TOKENS.md).
+
+## Công cụ kiểm thử camera trên máy phát triển
+
+Màn camera mặc định không hiển thị số đo kỹ thuật hoặc nút bỏ qua camera. Khi cần chẩn đoán tại Vite dev, đặt VITE_CAMERA_DIAGNOSTICS=true trong .env.local rồi khởi động lại, hoặc chạy trong Console và tải lại trang:
+
+```js
+localStorage.setItem('aegis.camera-diagnostics', 'true')
+location.reload()
+```
+
+Tắt bằng localStorage.removeItem('aegis.camera-diagnostics') rồi tải lại. Công cụ chỉ dành cho development; npm.cmd run build không bật chúng, kể cả cờ còn trong localStorage. Không dùng kịch bản giả lập làm bằng chứng đã xác thực người thật/danh tính.

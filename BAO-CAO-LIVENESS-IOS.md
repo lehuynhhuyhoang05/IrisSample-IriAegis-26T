@@ -59,3 +59,16 @@ Chuỗi số đo chỉ mô tả các frame được chấp nhận. Nó chưa đo
 Đã bổ sung điều kiện không đạt cụ thể và báo cáo RGB theo frame để điều tra. Giữ nguyên ngưỡng `0,280 / 0,040 / 0,040`, giữ phép AND và tiếp tục chặn sử dụng ảnh khi flash không đạt. Chưa xác nhận giải quyết việc từ chối người thật trên iPhone; cần số đo mới từ thiết bị thật.
 
 Tham khảo: [source Android nhóm 4](https://github.com/Long965/IrisSample-IriAegis-26T/tree/be89383530aa5845cf793a7cd4db90478f20f445), [tích hợp Web](LIVENESS.md), [Apple: màu và độ sáng màn hình](https://support.apple.com/en-euro/109351), [Canvas: không gian màu](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData).
+
+## 7. Thu số đo khi giao diện không bật debug — 16/11/2026
+
+Người dùng xác nhận thử bằng Safari trực tiếp: laptop đạt, iPhone có lần đạt và có lần bị từ chối phản xạ ánh sáng. Hai ảnh mới chỉ hiện lời nhắc cho người dùng, không có số đo; chưa thể kết luận nguyên nhân giống hai lần normB thấp ở bảng trên. Chưa có mẫu máy/iOS cho đợt thử này.
+
+Sau lỗi ở bước ánh sáng, màn hình có nút nhỏ **Lưu thông tin lỗi**. Thử lại vài lượt trên cùng trang rồi tải `iriaegis-camera-support.json`; bộ nhớ giữ tối đa 5 lượt đã đo xong, cả đạt và không đạt. Tải lại trang sẽ xóa lịch sử này. File chỉ được tải khi người dùng bấm nút, không tự gửi đi, không ghi localStorage. File chứa:
+
+- Ngưỡng, điều kiện không đạt, RGB trung bình từng pha và từng frame; không có pixel ảnh/video, tên sinh viên, tài khoản hay token.
+- Thời điểm yêu cầu và xác nhận hiển thị màu sau hai animation frame, kích thước/màu CSS của lớp flash. Đây là xác nhận lịch vẽ của Web, chưa chứng minh ánh sáng đã đến cảm biến.
+- Timestamp frame, khoảng thời gian từ lúc xác nhận màu, metadata thời gian nếu trình duyệt cung cấp; số mẫu bị bỏ do chưa hiển thị, chưa ổn định, timestamp cũ hoặc RGB không hợp lệ.
+- Kích thước/tốc độ camera và khả năng khóa phơi sáng/cân bằng trắng nếu trình duyệt cho biết; không lưu deviceId/groupId. User agent và kích thước viewport giúp đối chiếu nền tảng.
+
+Nút này không mở lại bảng debug trên màn tác vụ. Các số đo chỉ bổ sung khả năng điều tra; không thay cách lấy mẫu, thời lượng, ngưỡng hoặc kết quả xác thực. Flash không đạt vẫn chặn ảnh và không gửi MiniVision. Cần đối chiếu báo cáo đạt/không đạt trên cùng iPhone trước khi quyết định sửa phép đo. Kiểm thử bằng frame tổng hợp chỉ xác nhận điều phối và tải file, không chứng minh đã khắc phục độ chính xác trên iPhone thật.
