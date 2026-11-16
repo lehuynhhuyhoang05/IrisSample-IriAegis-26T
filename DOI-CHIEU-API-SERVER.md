@@ -1,6 +1,6 @@
 # Đối chiếu Web với API nhóm 1
 
-Ngày kiểm tra: **15/11/2026**. Nguồn chính: `openapi.yml` trong repository. Phạm vi: chế độ **Server** của Web, không dùng các thao tác mock làm bằng chứng kết nối API.
+Ngày kiểm tra lại: **16/11/2026**. Nguồn chính: `openapi.yml` trong repository. Phạm vi: chế độ **Server** của Web, không dùng các thao tác mock làm bằng chứng kết nối API.
 
 ## 1. Kết quả
 
@@ -10,6 +10,9 @@ Ngày kiểm tra: **15/11/2026**. Nguồn chính: `openapi.yml` trong repository
 - **3 operation `/sync/*`** được tách khỏi phạm vi Web theo phần mô tả API dành cho Android.
 - Đã bổ sung các khả năng thiếu và sửa request bị lẫn trường của backend cũ. Các response có schema được kiểm tra kiểu dữ liệu và trường bắt buộc.
 - **Chưa xác nhận backend thật:** kiểm tra hợp đồng dùng response giả lập theo YAML. Endpoint ghi `planned` vẫn phụ thuộc nhóm 1 triển khai.
+- Tính theo định nghĩa đầu của mỗi operation Web: **6 implemented, 28 planned, 4 không ghi x-status**. Đây là nhãn trong file, không phải kết quả kiểm tra server đang triển khai thực tế.
+
+**38/38 operation không đồng nghĩa đầy đủ chức năng Android.** Còn thiếu ở chế độ server: đối sánh danh tính/chống trùng mặt, sửa/xóa và ảnh Admin, cập nhật hồ sơ, bootstrap đầu tiên, kiosk mã/mật khẩu, backup tương đương Android. Các phần FE chưa hoàn thiện còn có biểu đồ/thống kê cá nhân/cảnh báo, xuất toàn bộ kết quả phân trang, CSV người nhận và công cụ MockCheckin. Chi tiết bằng chứng và phân loại ở [DOI-CHIEU-ANDROID-WEB.md](DOI-CHIEU-ANDROID-WEB.md).
 
 Không thể gọi toàn bộ YAML là một hợp đồng đã thống nhất hoàn toàn: file có path trùng và các định nghĩa khác nhau. Các điểm này được liệt kê ở mục 5; giữ nguyên file nhóm 1 gửi.
 
@@ -88,7 +91,7 @@ Trong chế độ Server không thêm API đăng nhập sinh viên, API đối s
 | Camera, MediaPipe phát hiện mặt và ảnh xem trước | Là xử lý trên trình duyệt. Không gửi `liveness: true`, ảnh hoặc kết quả nhận diện tự tạo vào `/attendance`. Ảnh hồ sơ sinh viên gửi đúng endpoint `/photo` khi người dùng chọn lưu. |
 | Xuất CSV trang báo cáo | Là chuyển các hàng server đã trả thành file tải xuống tại trình duyệt; không tạo endpoint export không có trong YAML. Nhãn ghi đúng chỉ trang đang xem. |
 | Bộ giao diện, điều hướng, xác nhận xóa, thông báo / thử lại | Thành phần UX phục vụ các operation có thật, không phải nghiệp vụ backend mới. |
-| Khởi tạo Super Admin, backup JSON, mống mắt, đối sánh/liveness giả lập, các luồng Android chờ API | Chỉ ở chế độ Demo hoặc được ghi chưa khả dụng. Không tính vào số chức năng server đã tích hợp. |
+| Khởi tạo Super Admin, backup JSON, mống mắt, đối sánh danh tính giả lập, các luồng Android chờ API | Chỉ ở chế độ Demo hoặc được ghi chưa khả dụng. Không tính vào số chức năng server đã tích hợp. Liveness thật qua dịch vụ nhóm 4 được kiểm tra riêng. |
 | UUID/seq/updated_at/deleted_at, vector và đường dẫn nội bộ Android | Metadata / dữ liệu hệ thống; không biến mỗi trường thành một form chỉnh sửa. Không dùng `/sync` để lách API Web còn thiếu. |
 
 Ba operation không dùng trên Web là `POST /sync/push`, `GET /sync/pull`, `GET /sync/status`. Đây là loại trừ đúng phạm vi, không phải thiếu chức năng.
@@ -131,7 +134,7 @@ Chế độ này đổi tên trường auth, giới hạn tạo tài khoản ADM
 
 ### 5.3. Các phần chưa có API
 
-Đối sánh ảnh điểm danh, liveness Nhóm 4, mống mắt, backup/restore, cập nhật hồ sơ và sửa/xóa/ảnh Admin vẫn chưa có operation Web trong file. Đây là phần chưa có hợp đồng từ server, không gọi là frontend đã xác thực khuôn mặt hoặc đã hoàn thành đồng bộ các nghiệp vụ đó.
+Đối sánh ảnh điểm danh, mống mắt, backup/restore, cập nhật hồ sơ và sửa/xóa/ảnh Admin vẫn chưa có operation Web trong file. Liveness nhóm 4 đã được nối riêng qua dịch vụ MiniVision và luồng chủ động trên Web; nhóm 1 chưa mô tả cách ràng buộc kết quả đó vào danh tính/lượt điểm danh. Vì vậy không gọi liveness REAL là đã xác thực đúng sinh viên. Xem [LIVENESS.md](LIVENESS.md).
 
 ## 6. Bằng chứng kiểm tra
 
@@ -139,7 +142,7 @@ Chế độ này đổi tên trường auth, giới hạn tạo tài khoản ADM
 - `src/api-contract.test.js` kiểm tra mapper, trường thừa/thiếu, endpoint ngoài đặc tả, enum/type, phản hồi thiếu và các mâu thuẫn thật giữa hai định nghĩa.
 - `tests/ui/server-fixture.js` kiểm tra request sinh từ UI với schema/query; response mẫu thành công có schema cũng được kiểm tra. Trường hợp không có schema được ghi nhận, không tự suy ra schema từ fixture.
 - `tests/ui/server-contract.spec.js` đi qua đủ **38/38** operation bằng thao tác giao diện, gồm đăng nhập bằng mã, refresh, quyền tạo Admin, CRUD/ghi danh, ảnh, lịch sử/tổng hợp, email, ba loại CSV và đăng xuất. Kết quả đính kèm `api-coverage.json` có `missing: []`, `violations: []`.
-- Hồi quy: **25 kiểm thử Node, 48 bài Chrome desktop/mobile, 24 bài WebKit** đạt. Bài contract còn được chạy lại sau chỉnh sửa cuối trên cả Chrome và WebKit.
+- Kiểm tra lại ngày 16/11/2026: **54/54 kiểm thử Node**, **16/16 bài `server.spec.js` và `server-contract.spec.js` trên Chrome desktop/mobile** đạt. Bài contract phát sinh đủ 38 operation. Những kết quả WebKit của đợt trước không được tính là lần kiểm tra lại này.
 - Đã xem ảnh form tài khoản và tab lịch sử ở 390 px. WebKit là mô phỏng, không phải xác nhận Safari trên iPhone thật.
 
 Các kiểm tra trên xác nhận cấu trúc và luồng phía frontend theo phần đặc tả được chọn; chưa kiểm tra HTTP/DB/Redis/email thật của nhóm 1 trong đợt này. Phân quyền thực tế vẫn do backend thực thi, không chỉ dựa vào việc ẩn nút trên UI.

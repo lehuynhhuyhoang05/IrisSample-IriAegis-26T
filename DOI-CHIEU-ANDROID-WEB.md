@@ -1,77 +1,90 @@
-# Đối chiếu Android → Web và kết quả rà soát giao diện
+# Đối chiếu chức năng Android và Web
 
-Ngày rà soát: 15/11/2026. Phạm vi: source Android trong `../IrisSample-IriAegis-26T` và bản portal Web tại `src/portal`. Đây là kết quả đọc code kết hợp chạy thử Web; không phải xác nhận chạy lại tất cả chức năng Android trên thiết bị.
+Rà soát ngày 16/11/2026 trên source hiện tại. Nguồn Android: `../IrisSample-IriAegis-26T/app/src/main/java/com/iritech/irissample/`. Nguồn Web: `src/portal` (demo cục bộ), `src/server` (client API) và `src/liveness` (camera/liveness).
 
-## 1. Kết luận về độ đầy đủ
+## Bổ sung UI sau rà soát
 
-Web đã có các nhóm màn hình nghiệp vụ chính, nhưng **chưa tương đương đầy đủ với Android**. Có ba loại khác biệt: tính năng còn thiếu, thao tác có giao diện nhưng kết quả đang giả lập, và quy tắc đã được thay đổi trong prototype. Không cộng ba loại này thành phần trăm hoàn thành hoặc báo “full chức năng”.
+Bản dữ liệu mẫu đã bổ sung các luồng UI còn thiếu có thể thực hiện cục bộ:
 
-Chưa tích hợp API, gửi email thật, đối sánh danh tính hay module liveness. File `openapi.yml` có trong workspace nhưng đợt này chưa dùng để kết nối dịch vụ. Dữ liệu portal vẫn lưu tại trình duyệt.
+- Điểm danh thử theo `MockCheckinActivity`: từng người/cả lớp, giờ tùy chọn/ngẫu nhiên, xóa lượt hôm nay của môn; có xác nhận, giữ người đã ghi nhận để tránh trùng.
+- Nhắc hoàn thiện hồ sơ ở lần đăng nhập đầu cho tài khoản mới; cập nhật ngay hoặc để sau, hoàn tất khi đã lưu ảnh.
+- Sinh trắc học: xem tình trạng ảnh mặt, ghi danh mống mắt, đăng nhập/đặt lại bằng mống mắt. Nhánh mống mắt hiện đúng trạng thái thiếu thiết bị/SDK, không tạo kết quả quét giả.
+- Báo cáo chuyển sang email giữ loại báo cáo, ngày/ca, khoảng ngày, từ khóa và trạng thái; CSV đính kèm được tạo từ cùng bộ lọc.
+- Sao lưu có tùy chọn AES-GCM/PBKDF2 bằng mật khẩu file, nhập/giải mã và từ chối mật khẩu sai/file hỏng; vẫn đọc JSON cũ. Đây là định dạng Web, không giải mã backup Android.
+- Sửa tràn nút tác vụ ở 768px và mở rộng ô chọn ca trên điện thoại.
 
-## 2. Bảng truy vết chức năng
+Các luồng quản lý Admin/hồ sơ, sinh viên/ghi danh, CSV người nhận, chọn tất cả, biểu đồ/thống kê cá nhân và kiosk đã có trong demo. Xem qua **Mở dữ liệu mẫu** ở màn đăng nhập. Những phần thiếu trong **chế độ server** ở bảng dưới vẫn là giới hạn API/client, không được dùng dữ liệu local để giả thành phản hồi server.
 
-Đường dẫn Java trong bảng tính từ `app/src/main/java/com/iritech/irissample/`; các file Web tính từ `src/portal/`.
+## 1. Kết luận
 
-| Chức năng | Nguồn Android cần đọc | Web và kết quả đối chiếu |
-|---|---|---|
-| Khởi tạo Super Admin | `LoginActivity`, `RegisterAdminActivity` | `Auth.jsx`, `domain.js`: có luồng khởi tạo khi dữ liệu rỗng, tài khoản demo. Chưa xác thực server. |
-| Đăng nhập, đăng xuất, bước xác thực mặt | `LoginActivity`, `FaceCaptureActivity` | `Auth.jsx`, `shared.jsx`: có giao diện và nhánh kết quả. Camera thật; đối sánh mặt là giả lập, không có MobileFaceNet trên Web. |
-| Quên/đặt lại mật khẩu | `LoginActivity` và luồng email/token | `Auth.jsx`: mô phỏng yêu cầu, token và đặt mật khẩu. Không gửi email thật; không phải cơ chế xác thực an toàn. |
-| Hồ sơ Admin | `ProfileActivity.attemptSave` | `Catalog.jsx`: xem/sửa tên, email, ảnh, điện thoại, ngày sinh, giới tính, mô tả, đổi mật khẩu có nhập lại. Đợt này bổ sung các trường cá nhân bị thiếu. Chưa thay thế xác nhận khóa thiết bị và email thông báo thay đổi của Android. |
-| Nhắc cập nhật lần đầu | `MainActivity.checkFirstLoginAndShowDialog` | **Còn thiếu cơ chế `firstLogin` tương đương.** Android có nhắc bổ sung ảnh/hồ sơ theo trạng thái tài khoản. Có màn hồ sơ không đồng nghĩa đã có luồng nhắc này. |
-| Quản lý Admin | `AdminListActivity`, `AdminDetailActivity`, `RegisterAdminActivity` | `Catalog.jsx`: danh sách, chi tiết, thêm/sửa/xóa, nhập CSV, ảnh. Phân quyền và mật khẩu xác nhận chỉ là bảo vệ thao tác demo phía frontend. Cần đối chiếu thêm toàn bộ validation và quy tắc xóa khi nối API. |
-| Môn học/lịch học | `SubjectListActivity`, `AddSubjectActivity` | `Catalog.jsx`: CRUD, tìm kiếm, giảng viên, học kỳ, lịch, CSV. Web đã có mô hình nhiều ca có cấu trúc; không coi đây là schema Android/API chính thức. |
-| Sinh viên toàn hệ thống và trong môn | `StudentManagementActivity`, `StudentListActivity` | `Catalog.jsx`: CRUD, tìm kiếm, gán/bỏ môn, tạo sinh viên trong môn, CSV, ảnh, điện thoại. Đã thêm lọc đã/chưa điểm danh hôm nay trong chi tiết môn. Phân biệt xóa hồ sơ với bỏ khỏi môn. |
-| Chụp/chọn ảnh, chống trùng ảnh | `FaceCaptureActivity`, `FaceMatchHelper`, các Activity đăng ký | `App.jsx`, `shared.jsx`: chụp/chọn ảnh thật, preview, MediaPipe phát hiện khuôn mặt. Chống trùng/khớp ảnh cũ là lựa chọn kịch bản giả lập; chưa xác minh một người đã đăng ký nhiều tài khoản. |
-| Điểm danh từ danh sách hoặc mã SV | `StudentListActivity`, `StudentManagementActivity` | `Attendance.jsx`: chọn/nhập mã → mật khẩu → camera/liveness/đối sánh giả lập → ghi nhận local. Không tạo tài khoản sinh viên tự đăng nhập. Demo có thêm chọn ngày/ca, chưa tương đương hoàn toàn với điểm danh tại thời điểm hiện tại trên Android. |
-| Phân loại đúng giờ/muộn | `AttendanceManagementActivity.classifyCheckinStatus` | `domain.js`: đã sửa mốc sau 15 phút đầu; đúng tại mốc 15 phút vẫn là đúng giờ. Có test biên theo giây. Không tự bật các nhánh giới hạn giờ đang bị comment ở Android. |
-| Lịch sử, lọc, thống kê học kỳ, CSV | `AttendanceManagementActivity.loadSemesterAggregateRecords`, `showExportModeDialog` | `Attendance.jsx`: có báo cáo buổi/lịch sử/học kỳ, tìm kiếm, lọc, xuất. Đã sửa tổng học kỳ theo số ngày có ghi nhận của môn. Báo cáo theo buổi của Web vẫn suy ra vắng khi ca dự kiến kết thúc — đây là khác biệt cần thống nhất, không phải cùng một quy tắc với tổng hợp học kỳ. |
-| Biểu đồ và thống kê từng sinh viên | `calculateAndShowChart`, `showStudentStatsDialog`, `AttendanceRecordAdapter` | Đã bổ sung biểu đồ thanh có nhãn/số, hộp thoại thống kê từng sinh viên và cảnh báo vắng từ 2 buổi. Biểu đồ Web thay hình thức donut; dữ liệu vẫn là demo. |
-| Người nhận và gửi báo cáo | `AttendanceManagementActivity.setupEmailComponent`, `EmailService` | `Operations.jsx`: CRUD/import người nhận, chọn từng người/chọn tất cả, xuất file trước khi xem/gửi, preview, lỗi/thử lại, lịch sử giả lập. Đợt này sửa việc gửi mặc định toàn bộ người nhận. Chưa gửi SMTP/API; nội dung đính kèm hiện là lịch sử môn, chưa chuyển nguyên báo cáo đã lọc từ màn Reports. |
-| Sao lưu/khôi phục | `BackupRestoreActivity`, `BackupRestoreHelper`, `EncryptionHelper` | `Operations.jsx`: JSON demo, tải/nhập/khôi phục, xóa một/xóa tất cả bản trong phiên. **Không tương đương backup mã hóa của Android.** Danh sách chỉ trong bộ nhớ màn hình. Android `showBackupsList` còn TODO; danh sách Web là cách mô phỏng, không phải tính năng Android đã hoàn tất. |
-| Mống mắt/USB/license | `CaptureActivity`, `LicenseCheckHelper`, các module SDK liên quan | Chỉ thông báo chưa tích hợp. Không có luồng Web hoạt động tương đương; cần SDK, thiết bị và phương án trình duyệt/server. |
+**Chưa chuyển đầy đủ chức năng Android lên Web.** Demo có các màn nghiệp vụ chính, nhưng một số kết quả chỉ giả lập. Chế độ server có client cho đủ 38 operation REST dành cho Web trong YAML, song vẫn thiếu các nghiệp vụ Android chưa có API hoặc chưa được xây dựng trong giao diện server.
 
-## 3. Sai khác cần xử lý trước khi tuyên bố hoàn tất chuyển chức năng
+Không dùng “38/38 endpoint” để kết luận “100% chức năng Android”, “đối sánh danh tính hoàn tất” hoặc “backend đã tích hợp thật”.
 
-1. **Nhắc hồ sơ lần đầu:** bổ sung trạng thái/luồng theo `MainActivity`, thống nhất nơi lưu trạng thái với API. Không suy ra từ việc thiếu ảnh đơn thuần nếu tài khoản đã được đánh dấu hoàn tất.
-2. **CSV:** Web hiện dùng template riêng, kiểm tra toàn bộ trước khi ghi và thêm mới. Android có cách ánh xạ cột, cập nhật/bỏ qua và xử lý lỗi từng dòng ở từng luồng. Cần bộ file mẫu thật cho Admin, môn, sinh viên, người nhận; không quảng bá rằng mọi CSV Android nhập thẳng được vào Web.
-3. **Báo cáo → email:** cần truyền đúng báo cáo ngày/học kỳ và bộ lọc sang bước gửi. Nút xuất CSV trên Email hiện chỉ chuẩn bị lịch sử môn, chưa phải toàn bộ sự liên thông này.
-4. **Lịch và điểm danh:** mô hình nhiều ca, ngày cho phép điểm danh, trạng thái vắng, bảo toàn lịch sử khi bỏ môn và quyền sửa lịch cần chốt lại theo Android/API. Android chặn trùng theo sinh viên/môn/ngày; Web hiện chặn theo sinh viên/môn/ngày/ca. Đây là sai khác còn phải sửa, đặc biệt khi một môn có nhiều ca cùng ngày: tổng hợp theo ngày có thể đếm thừa lượt của một người. Các chặn bổ sung của prototype không tự trở thành nghiệp vụ được duyệt.
-5. **Validation hồ sơ:** các trường đã có UI nhưng chưa khẳng định mọi ràng buộc trùng Android, ví dụ điện thoại 10 số ở đăng ký Admin. Đối chiếu từng form khi chuẩn hóa dữ liệu server.
-6. **Chức năng phụ thuộc:** reset qua email, gửi báo cáo, chống trùng mặt, liveness, xác thực nhạy cảm, backup mã hóa và đồng bộ cần module/dịch vụ thật. Hoàn thành giao diện không đồng nghĩa hoàn thành những chức năng này.
+## 2. Bảng đối chiếu theo chức năng
 
-## 4. Những phần đã có trên Web nhưng không được dùng làm bằng chứng Android có sẵn
+Đường dẫn Java trong bảng tính từ thư mục nguồn Android nêu trên. Đường dẫn Web tính từ `src/`.
 
-- Trang Hôm nay tổng hợp lịch; dữ liệu phòng học/lớp hành chính của prototype; nhiều ca học có ID riêng.
-- Nhật ký thao tác local, kịch bản mạng chậm/lỗi, liveness giả lập, reset dữ liệu demo.
-- Giữ lịch sử sau khi bỏ sinh viên khỏi môn; chặn sửa lịch đã có điểm danh; khóa một số thao tác theo vai trò ở domain Web.
-- Danh sách backup JSON theo phiên, tải JSON và kiểm tra cấu trúc; đây không phải giải mã file backup Android.
+| Chức năng Android và bằng chứng | Demo cục bộ | Chế độ server / trạng thái thực tế |
+| --- | --- | --- |
+| Khởi tạo Super Admin khi chưa có tài khoản — `LoginActivity.onCreate`, `RegisterAdminActivity` | Có bootstrap khi bộ dữ liệu rỗng: `portal/Auth.jsx`, `domain.js`. | Chưa có bootstrap công khai. `POST /auth/register` yêu cầu Super Admin đã đăng nhập; tài khoản đầu tiên cần server seed. |
+| Đăng nhập/đăng xuất — `LoginActivity.attemptLogin`, `MainActivity` | Có tài khoản/mật khẩu local. | Có login, me, refresh, logout: `server/Session.jsx`, `client.js`. |
+| Xác thực mặt sau mật khẩu — `LoginActivity` mở `FaceCaptureActivity` khi đã có ảnh | Có nhánh camera khi tài khoản có ảnh; đối sánh danh tính giả lập. | Chưa có bước xác thực danh tính bằng mặt trong đăng nhập. Login thành công mở phiên từ token. API chưa có hợp đồng cho bước xác thực mặt. |
+| Quên/đặt lại mật khẩu — `ForgotPasswordActivity`, `ResetPasswordActivity` | Có mã mô phỏng; không gửi email. | Có form yêu cầu email/mã/reset: `server/Auth.jsx`. Chưa xác nhận email thật; link `irissample://` của Android không phải link reset của Web. |
+| Hồ sơ cá nhân: tên, email, điện thoại, ngày sinh, giới tính, mô tả, ảnh — `ProfileActivity` | Có xem/sửa local qua `portal/Catalog.jsx`. | Xem tên/email/vai trò và đổi mật khẩu; chưa có cập nhật hồ sơ/ảnh Admin: `server/Operations.jsx`. Thiếu API tương ứng. |
+| Nhắc cập nhật hồ sơ/ảnh lần đầu — `MainActivity.checkFirstLoginAndShowDialog` | Đã có nhắc hồ sơ lần đầu cho tài khoản mới trong demo, dẫn tới hồ sơ và cho để sau. | Có bắt đổi mật khẩu khi `is_first_login === 1`, nhưng chưa phải luồng hoàn thiện ảnh/hồ sơ như Android. |
+| Quản lý Admin: danh sách/chi tiết/thêm/sửa/xóa/CSV — `AdminListActivity`, `AdminDetailActivity`, `RegisterAdminActivity` | Có CRUD, CSV, ảnh. | Có danh sách/chi tiết, tạo qua register và CSV; chưa sửa/xóa Admin, chưa upload ảnh Admin. YAML chưa có các operation đó. |
+| Khóa thiết bị trước thao tác nhạy cảm — `BiometricAuthHelper`, `AdminDetailActivity`, `ProfileActivity` | Thay bằng nhập lại mật khẩu demo. | Có hộp thoại xác nhận, chưa có cơ chế tương đương khóa thiết bị/WebAuthn hoặc xác thực tăng cường được server kiểm chứng. |
+| Môn học: danh sách/tìm/chi tiết/thêm/sửa/xóa/gán giảng viên — `SubjectListActivity`, `AddSubjectActivity` | Có UI đầy đủ nhóm thao tác. | Có CRUD, lọc, sort, phân trang, gán instructor: `server/Catalog.jsx`. |
+| Lịch và học kỳ — `AddSubjectActivity`, `AttendanceManagementActivity` | Dùng mảng ca có ID riêng, trường phòng/học kỳ riêng. | Dùng `time_slot`, `semester_start_date`, `semester_end_date` theo YAML. Mô hình nhiều ca local không phải schema API chính thức. |
+| Sinh viên: quản lý toàn hệ thống/trong môn, thêm/sửa/xóa/tìm/CSV — `StudentManagementActivity`, `StudentListActivity`, `AddStudentActivity`, `ImportCsvActivity` | Có UI và lưu local. | Có CRUD, lọc/sort/phân trang/CSV: `server/Catalog.jsx`, `Jobs.jsx`. |
+| Ghi danh/bỏ sinh viên khỏi môn — `StudentListActivity`, `DatabaseHelper` | Có; giữ hồ sơ và lịch sử khi bỏ môn. | Có list/enroll/unenroll theo API. Rule giữ/xóa lịch sử thực tế do backend quyết định. |
+| Chụp/chọn/xem/lưu ảnh sinh viên — `AddStudentActivity`, `FaceCaptureActivity` | Có camera/file/preview/lưu local. | Có tải và upload ảnh qua `/students/{student_id}/photo`; camera có liveness. Chọn ảnh từ file không tạo bằng chứng liveness. |
+| Kiểm tra trùng mặt, kiểm tra ảnh mới là cùng người, vector/cosine — `FaceMatchHelper.compareFaces`, `AddStudentActivity`, `AdminDetailActivity`, `ProfileActivity` | Có lựa chọn kết quả giả lập. | **Chưa triển khai đối sánh danh tính/chống trùng thật.** Liveness REAL không thay thế bước này. API nhóm 1 chưa có endpoint đối sánh/kiểm tra trùng. |
+| Điểm danh chọn sinh viên → mật khẩu → xác thực mặt — `StudentListActivity` | Có luồng UI; mật khẩu local và kết quả match giả lập. | Chọn sinh viên → xác nhận thủ công → POST attendance; camera/liveness là bước có thể mở thêm. Không có API kiểm tra mật khẩu điểm danh hoặc ràng buộc kết quả face/liveness. |
+| Điểm danh bằng nhập mã SV + mật khẩu — `StudentManagementActivity.showCheckinByPasswordDialog` | Có tab nhập mã trong `portal/Attendance.jsx`. | Có tìm/chọn sinh viên trong môn; chưa có luồng kiosk nhập mã + mật khẩu tương đương Android. Không dùng mật khẩu lưu ở client để thay xác thực server. |
+| Công cụ tạo điểm danh thử hàng loạt/ngẫu nhiên/xóa hôm nay, giờ tùy chọn — `MockCheckinActivity` | Đã có trang `mock-attendance`: tạo từng lượt/cả lớp, giờ tùy chọn/ngẫu nhiên, xóa hôm nay theo môn. | Chưa có UI tương đương. Đây là tiện ích thử dữ liệu, không phải nhận diện hàng loạt bằng camera. |
+| Đúng giờ/muộn/vắng; lọc theo trạng thái — `AttendanceManagementActivity.classifyCheckinStatus`, `filterAttendanceList` | Có, mốc 15 phút đã có test; vẫn còn khác biệt khi nhiều ca cùng ngày. | Báo cáo hiện hiển thị ngày/giờ và tổng có mặt/vắng; chưa có đúng giờ/muộn và bộ lọc trạng thái tương đương Android. Không cần tự tạo nhãn từ chuỗi lịch chưa được chuẩn hóa. |
+| Báo cáo ngày/lịch sử/học kỳ — `loadAttendanceRecords`, `loadSemesterAggregateRecords` | Có UI và tổng hợp local. | Có ba tab, khoảng ngày, lọc mã SV, sort, phân trang, xóa lượt; summary theo response server: `server/Reports.jsx`. |
+| Biểu đồ, thống kê từng sinh viên và cảnh báo vắng — `calculateAndShowChart`, `showStudentStatsDialog`, `AttendanceRecordAdapter` | Có biểu đồ thanh/dialog/cảnh báo local. | **Chưa có biểu đồ, dialog thống kê cá nhân và cảnh báo tương đương.** Một phần có thể dựng từ summary/checkins hiện có; không quy toàn bộ thiếu sót này cho backend. |
+| Xuất CSV báo cáo ngày/học kỳ — `showExportModeDialog`, `writeDayModeCsv`, `writeSemesterModeCsv` | Có xuất dữ liệu đang lọc. | Có xuất **trang đang xem**, chưa xuất toàn bộ các trang/đầy đủ các cột báo cáo Android. Có thể dùng API phân trang để xây thêm. |
+| Quản lý/chọn người nhận báo cáo — `setupEmailComponent` | Có CRUD, chọn từng người/chọn tất cả. | Có CRUD và sửa `is_selected`; chưa có thao tác chọn tất cả tương đương. |
+| Nhập CSV người nhận — `importEmailsFromCsv` | Có. | **Chưa có UI nhập CSV người nhận.** `/import/csv` chỉ mô tả students/subjects/admin. Có thể đề xuất xử lý CSV FE rồi gọi POST recipient từng dòng, nhưng cần thiết kế lỗi từng phần/trùng trước khi coi là đã hoàn thành. |
+| Gửi báo cáo theo phạm vi đã chọn — `AttendanceManagementActivity`, `EmailService` | Gửi giả lập; nhận bộ lọc và loại báo cáo từ Reports, cùng hàm xuất CSV cho bản đính kèm. | Có giữ khoảng ngày từ Reports sang Email, POST send-report và theo dõi job. Nội dung/file báo cáo thật do server tạo, chưa kiểm chứng email nhận thực tế. |
+| Email thông báo tạo/sửa/xóa tài khoản — `EmailService` và các Activity quản trị | Chưa có gửi thật. | Không có API gửi từng loại thông báo này; cần kiểm tra side effect backend. Có form CRUD không đồng nghĩa email đã gửi. |
+| Backup/restore database + ảnh mã hóa — `BackupRestoreActivity`, `BackupRestoreHelper`, `EncryptionHelper` | Có JSON cũ và tùy chọn mã hóa file Web bằng mật khẩu, backup trong phiên, tải/nhập/xóa/restore. Không đọc định dạng backup Android. | Chưa có API/UI vận hành backup server. Android xem tất cả backup cũng còn TODO; không tính TODO là chức năng Android đã chạy. |
+| Mống mắt, USB, license — `LicenseCheckHelper`, các đoạn gọi SDK | Có màn trạng thái, ghi danh và các điểm vào đăng nhập/đặt lại mống mắt; chặn quét khi thiếu SDK/thiết bị. | Chưa có tích hợp. SDK/module ở Android gốc đang comment/thiếu; không phải chức năng hoạt động đã bỏ sót khỏi Web. |
 
-Các mục này đã tồn tại trong prototype trước đợt rà soát. Được ghi riêng để nhóm không lấy chúng làm yêu cầu backend mặc định. Đợt này chưa mở thêm nhóm nghiệp vụ cải tiến mới.
+## 3. Liveness hiện tại
 
-## 5. Thay đổi UI/UX trong đợt rà soát
+`src/liveness/FullLivenessCamera.jsx` đã triển khai chớp mắt, quay đầu hai phía, chính diện, đo phản xạ đỏ/xanh rồi gọi MiniVision. `src/liveness/client.js` gửi file đến `POST /api/v1/predict-liveness` qua proxy riêng. Đây là phần nhận từ nhóm 4, được chuyển nền tảng sang Web, không phải tính năng có sẵn trong Android gốc nêu trên.
 
-- Giữ nhận diện màu/logo Android, dùng font hệ thống; thay Lucide bằng Phosphor qua một file export dùng chung.
-- Danh sách mobile dùng hàng phân cách, tên mở chi tiết; bỏ icon mũi tên trùng chức năng, chỉ giữ sửa/xóa khi được phép.
-- Giảm độ nặng của nút phụ, khoảng cách và phần đầu trang; giữ mỗi vùng một nút chính.
-- Hộp thoại có vùng cuộn riêng, tiêu đề và chân nút không cuộn cùng form; điều khiển tối thiểu 44px, chữ input 16px, giữ focus.
-- Tabbar dưới cho điện thoại, sidebar cho desktop; giữ khung oval và video inline của camera.
+REAL cho phép sử dụng ảnh sau khi đủ luồng; FAKE/lỗi không cho sử dụng. Chưa có hợp đồng phía nhóm 1 để chứng minh kết quả này thuộc đúng danh tính/đúng lượt điểm danh. Xem [LIVENESS.md](LIVENESS.md).
 
-Tham khảo đã đọc: [frontend-design của Anthropic](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md). Áp dụng cách chọn thiết kế theo tác vụ, giảm câu chữ mẫu và đánh giá ảnh render; chưa cài skill vào máy. Icon: [Phosphor React](https://github.com/phosphor-icons/react). Không thêm shadcn hay một UI kit thứ hai chỉ để đổi phong cách.
+## 4. Sai khác nghiệp vụ phải chốt
 
-## 6. Cách kiểm tra lại
+- Android gốc kiểm tra trùng lượt theo sinh viên/môn/ngày; demo Web có thêm ID ca. Một môn nhiều ca cùng ngày có thể cho kết quả tổng hợp khác.
+- Demo có lịch dự kiến và suy ra vắng sau giờ kết thúc; báo cáo server lấy từ API, không dùng engine local để thay kết quả.
+- Demo xóa thực thể và dữ liệu liên quan theo command local; đặc tả server dùng xóa mềm. Hai cách không đồng nhất.
+- Demo có phòng học, lớp hành chính, audit local, kịch bản lỗi/chậm và chọn ngày/ca. Đây không phải bằng chứng Android hoặc mọi API CRUD có sẵn các trường/chức năng đó; riêng `class_name` có xuất hiện trong mô tả CSV server.
+- Đổi mật khẩu lần đầu theo YAML và nhắc hoàn thiện ảnh/hồ sơ của Android là hai yêu cầu khác nhau.
+- Web chưa có tài khoản sinh viên tự đăng nhập/tự điểm danh bằng thiết bị riêng; không tự thêm luồng này vào phạm vi đã chuyển từ Android.
 
-```powershell
-npm.cmd ci
-npm.cmd run lint
-npm.cmd test
-npm.cmd run build
-npm.cmd run test:ui
-npm.cmd run test:webkit
-```
+## 5. Việc còn lại khi chuyển bản UI cục bộ sang vận hành thật
 
-Chạy hai bộ Playwright tuần tự vì dùng chung cổng test. Screenshot nằm trong `test-results`, bị thay thế khi chạy lượt tiếp theo. Mở `/#/app` để thử nghiệp vụ, `/#/camera` để xem camera riêng, `/#/ui-kit` để xem component.
+1. Hoàn thiện các thiếu sót FE độc lập: biểu đồ/thống kê cá nhân/cảnh báo, xuất toàn bộ dữ liệu đã lọc, tiện ích dữ liệu thử nếu giữ phạm vi MockCheckin.
+2. Chốt UI thay thế/phần chờ cho nhập CSV người nhận, chọn tất cả, kiosk và lần đăng nhập đầu.
+3. Nhóm 1 bổ sung/chốt hợp đồng quản trị Admin/hồ sơ/ảnh, face verification/chống trùng, kiểm tra mật khẩu điểm danh và ràng buộc liveness.
+4. Chốt định nghĩa lịch/ca, trạng thái điểm danh, trùng lượt, xóa mềm và side effect email.
+5. Xác định phương án backup/restore, xác thực thao tác nhạy cảm; ghi rõ Iris bị hoãn nếu thiếu SDK/thiết bị.
+6. Manual test đầy đủ các nhánh trên thiết bị thật; test giả lập không xác nhận model chính xác hay backend đã thực thi phân quyền.
 
-Kiểm thử tự động bao gồm CRUD, quyền demo, CSV, điểm danh giả lập, không dùng kết quả cũ sau đổi môn, email lỗi/thử lại, backup/restore, reset mật khẩu, hồ sơ cá nhân, chọn người nhận, báo cáo và responsive. Phát hiện khuôn mặt qua webcam thật, bàn phím iOS, Safari iPhone và trình duyệt trong Zalo cần kiểm tra trên thiết bị; WebKit chạy trên Windows không xác nhận thay cho các trường hợp đó.
+## 6. Kiểm tra đã chạy trong lần rà soát
 
-Kết quả lượt rà soát này: lint/build đạt; 14/14 unit test đạt; lượt WebKit cuối đạt 16/16. Chrome desktop/mobile: lượt đầu 31/32, phát hiện lỗi checkbox chọn tất cả nằm trong header bảng bị ẩn; sau sửa, 4/4 bài chạy lại cho chọn người nhận và toàn bộ màn hình đạt. Đã mở screenshot desktop và mobile để kiểm tra danh sách, form và điểm danh. Một lượt WebKit bị tải lại trang giữa bước reset khi đang sửa tài liệu; chạy riêng hai lần và lượt cuối đầy đủ đều đạt. Không sửa file trong khi chạy các lượt xác nhận cuối.
+- `npm.cmd run audit:api`: có mapping cho 38 operation Web; 3 operation sync được loại trừ đúng phạm vi Android.
+- `npm.cmd test`: 57/57 đạt sau khi bổ sung các luồng cục bộ.
+- Playwright `portal.spec.js` và `android-completion.spec.js`: 32/32 đạt trên Chrome desktop/mobile. Năm bài mới còn chạy trên WebKit mô phỏng iPhone và đều đạt. Đã chụp và xem màn mới ở 390/768/1440px, kiểm tra thêm 360px; WebKit không thay thế Safari iPhone thật.
+- Playwright `server.spec.js` và `server-contract.spec.js`: 16/16 đạt trên desktop Chrome và mobile Chrome mô phỏng. Bài contract phát sinh đủ 38 operation từ UI, kiểm tra payload/response có schema bằng YAML.
+- Chưa dùng đợt kiểm tra này để xác nhận backend nhóm 1 thật, email/Redis thật, tính đúng của model hay Safari iPhone thật.
+
+Ma trận endpoint chi tiết: [DOI-CHIEU-API-SERVER.md](DOI-CHIEU-API-SERVER.md).

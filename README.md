@@ -18,6 +18,34 @@ Trình duyệt gọi `/api/v1` qua proxy Vite; đích mặc định `http://loca
 
 Ứng dụng có chế độ kết nối server và chế độ dữ liệu mẫu để kiểm thử giao diện. Tại màn đăng nhập chọn **Mở dữ liệu mẫu**, sau đó đăng nhập `super@demo.test` hoặc `lan@demo.test` với mật khẩu `Demo@123`. Mật khẩu điểm danh mẫu là `123456`. Dữ liệu mẫu lưu trên trình duyệt, tách biệt với server.
 
+### Kiểm thử UI bằng dữ liệu mẫu
+
+#### Bản UI theo Android trước khi nối API
+
+Chọn **Mở dữ liệu mẫu** tại màn đăng nhập để thử các luồng cục bộ. Ngoài quản lý tài khoản, môn, sinh viên, camera/điểm danh, báo cáo/email và backup đã có, menu **Thêm** cung cấp:
+
+- **Điểm danh thử** (`/#/app/mock-attendance`): chọn môn/ca hôm nay, tạo lượt từng người hoặc cả lớp với giờ tùy chọn/ngẫu nhiên, xóa lượt hôm nay có xác nhận. Không chạy xác thực khuôn mặt.
+- **Sinh trắc học** (`/#/app/biometrics`): cập nhật ảnh qua hồ sơ, xem điều kiện ghi danh mống mắt. Luồng mống mắt dừng ở trạng thái thiếu SDK/thiết bị. Các nút đăng nhập/đặt lại bằng mống mắt trên màn tài khoản cũng hiển thị giới hạn này.
+- **Sao lưu**: có thể bật mã hóa trước khi tải, nhập mật khẩu file khi khôi phục. Mật khẩu file có thể khác mật khẩu tài khoản. File Web không tương thích backup Android.
+
+Tài khoản mới được nhắc bổ sung ảnh/hồ sơ lần đầu. Từ báo cáo, chọn bộ lọc rồi **Chuẩn bị email** sẽ giữ cùng dữ liệu cho CSV đính kèm. Các kết quả danh tính và gửi email trong chế độ này vẫn là giả lập. API nhóm 1 dùng chế độ server riêng; không dùng thao tác demo làm bằng chứng đã tích hợp backend.
+
+#### Tài khoản và lớp mẫu
+
+| Tài khoản | Vai trò và dữ liệu có thể kiểm tra |
+| --- | --- |
+| `super@demo.test` | Super Admin: cả ba môn, danh sách quản trị viên, sinh viên và phần cài đặt demo. |
+| `lan@demo.test` | Admin phụ trách WEB301: 8 sinh viên, 3 lượt điểm danh mẫu và người nhận báo cáo. |
+| `nam@demo.test` | Admin phụ trách CSDL201: 4 sinh viên, chưa có lượt điểm danh mẫu và có người nhận báo cáo. |
+
+Ba tài khoản dùng mật khẩu `Demo@123`. Sinh viên mẫu có mã `SV001`–`SV008` và mật khẩu điểm danh `123456`. Môn JAVA202 chưa được gán giảng viên và chưa có sinh viên để kiểm tra trạng thái rỗng. Ở WEB301, `SV001` và `SV002` có lượt đúng giờ, `SV003` có lượt muộn; chọn một sinh viên còn lại để thử điểm danh. Trạng thái chưa điểm danh hoặc vắng phụ thuộc thời điểm hiện tại so với giờ kết thúc ca.
+
+Lịch WEB301 và CSDL201 được tạo vào thứ của **ngày nạp dữ liệu mẫu**, còn JAVA202 vào ngày kế tiếp. Dữ liệu đã lưu trong trình duyệt không tự thay đổi theo ngày; có thể chọn ngày tương ứng trên màn điểm danh/báo cáo. Nếu muốn khôi phục bộ mẫu theo ngày hiện tại, đăng nhập Super Admin, vào **Cài đặt → Nạp lại dữ liệu mẫu** và xác nhận. Thao tác này thay dữ liệu demo trên trình duyệt và đăng xuất; hãy xuất sao lưu trước nếu cần giữ thay đổi.
+
+Các sinh viên và quản trị viên mẫu chưa có ảnh khuôn mặt; có thể tự thêm ảnh khi thử luồng tương ứng. Tài khoản, điểm danh và email ở chế độ này là giả lập, không chứng minh đã xác thực danh tính hay gửi dữ liệu tới server.
+
+Đối chiếu `openapi.yml`: bộ mẫu có các thực thể quản trị viên, môn học, sinh viên, đăng ký môn, lịch sử điểm danh và người nhận email. Đây là mô hình cục bộ phục vụ UI, **không phải response mock tuân thủ API**: ví dụ `id`/`name` trong bộ mẫu khác `student_id`/`full_name` trong API. Lớp hành chính, phòng học và lịch chi tiết ở demo cần đối chiếu lại với backend; không coi là trường API đã được cam kết. Các kiểm thử chế độ server dùng fixture riêng để kiểm tra request/response theo YAML, không kết nối server thật.
+
 ## Bộ nền giao diện cho nhóm — tuần 2
 
 Chạy `npm.cmd run dev`, sau đó mở `/#/ui-kit` trên địa chỉ Vite để xem màn hình mẫu, component, token và hướng dẫn. Bộ mẫu chỉ có trong chế độ phát triển, không nằm trong build production. Hướng dẫn cho thành viên: [UI-GUIDELINES.md](UI-GUIDELINES.md). Đường dẫn `/#/camera` mở camera độc lập.
