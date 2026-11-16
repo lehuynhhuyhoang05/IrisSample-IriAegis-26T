@@ -141,6 +141,8 @@ LIVENESS_PROXY_TARGET=http://127.0.0.1:8000
 
 Vite proxy bỏ `/liveness-api` trước khi chuyển sang nhóm 4, tách khỏi `/api/v1` nhóm 1 cổng 5000. Khi deploy cần reverse proxy tương ứng; Vite không tự cấu hình hosting.
 
+Nếu bước MiniVision lỗi kết nối, kiểm tra `http://127.0.0.1:8000/` trên máy chạy Web: phải trả JSON có `status: online`. Vite trả `502` kèm thông báo khởi động dịch vụ khi không kết nối được MiniVision. Lỗi `500` có `detail` từ MiniVision là lỗi xử lý phía dịch vụ, cần xem terminal Python. Việc chạy Web bằng `npm.cmd run dev` không tự khởi động Python; khi tắt terminal MiniVision cần chạy lại lệnh trên. Trên iPhone vẫn dùng link HTTPS tunnel của Web để request đi qua proxy.
+
 1. Mở `http://127.0.0.1:5173/#/camera`, tải lại trang để nhận code mới.
 2. Cho phép đo hai lượt sáng và gửi ảnh, bấm **Bắt đầu xác thực**.
 3. Nhìn thẳng, giữ mắt mở khoảng một giây để hiệu chuẩn. Khi được nhắc, chớp cả hai mắt và mở lại.

@@ -30,6 +30,7 @@ test('group 4: dữ liệu thiếu, nhãn mâu thuẫn, điểm sai kiểu đề
 })
 
 test('group 4: lỗi HTTP, mạng, timeout và hủy không tạo kết quả đạt', async () => {
+  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Không kết nối được dịch vụ liveness.' }, { status: 502 }) }), /Không kết nối được dịch vụ liveness/)
   await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Model unavailable' }, { status: 503 }) }), /Model unavailable/)
   await assert.rejects(predictLiveness(blob, { fetcher: async () => { throw new TypeError('Offline') } }), /Không kết nối được/)
   const hanging = (_, { signal }) => new Promise((resolve, reject) => { if (signal.aborted) reject(signal.reason); else signal.addEventListener('abort', () => reject(signal.reason), { once: true }) })

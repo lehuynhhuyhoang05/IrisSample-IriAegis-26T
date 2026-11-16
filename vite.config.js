@@ -8,7 +8,17 @@ export default defineConfig(({ mode }) => {
   // The default target is the Flask address supplied in openapi.yml.
   const proxy = {
     '/api/v1': { target: env.API_PROXY_TARGET || 'http://localhost:5000', changeOrigin: true },
-    '/liveness-api': { target: env.LIVENESS_PROXY_TARGET || 'http://127.0.0.1:8000', changeOrigin: true, rewrite: path => path.replace(/^\/liveness-api/, '') || '/' },
+    '/liveness-api': {
+      target: env.LIVENESS_PROXY_TARGET || 'http://127.0.0.1:8000', changeOrigin: true,
+      rewrite: path => path.replace(/^\/liveness-api/, '') || '/',
+      configure(proxy) {
+        proxy.on('error', (_error, _request, response) => {
+          if (!response || !('writeHead' in response) || response.headersSent || response.writableEnded) return
+          response.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' })
+          response.end(JSON.stringify({ detail: 'Không kết nối được dịch vụ liveness. Hãy khởi động MiniVision (mặc định cổng 8000) rồi xác thực lại.' }))
+        })
+      },
+    },
   }
   return {
     plugins: [react(), tailwindcss()],
