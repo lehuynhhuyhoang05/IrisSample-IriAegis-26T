@@ -1,0 +1,117 @@
+/* global localStorage */
+import { test, expect } from '@playwright/test'
+import { localDate, seedData, today } from '../../src/portal/domain.js'
+
+test.use({ viewport: { width: 390, height: 844 } })
+
+async function login(page, data = seedData()) {
+  await page.addInitScript(data => {
+    localStorage.setItem('aegis.data-mode', 'demo')
+    localStorage.setItem('aegis.camera-diagnostics', 'true')
+    localStorage.setItem('iriaegis.business-demo.v1', JSON.stringify(data))
+  }, data)
+  await page.goto('/#/app/login')
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Hôm nay', exact: true })).toBeVisible()
+}
+
+async function confirmDemo(page) {
+  await page.getByLabel('Mật khẩu điểm danh', { exact: false }).fill('123456')
+  await page.getByRole('button', { name: 'Tiếp tục đến camera' }).click()
+  await page.getByText('Kiểm thử giao diện', { exact: true }).click()
+  await page.getByRole('button', { name: 'Dùng kịch bản không camera (giả lập)' }).click()
+  await page.getByRole('button', { name: 'Chạy kiểm tra giả lập' }).click()
+  await page.getByRole('button', { name: 'Xác nhận kết quả demo' }).click()
+  await expect(page.getByRole('heading', { name: 'Đã ghi nhận điểm danh demo' })).toBeVisible()
+}
+
+test('demo: Vào lớp giữ đúng ca được chọn từ Hôm nay khi một môn có hai ca', async ({ page }, info) => {
+  const db = seedData()
+  db.courses[0].schedules.push({ ...db.courses[0].schedules[0], id: 'WEB_S2', start: '13:00', end: '16:30' })
+  await login(page, db)
+  await page.locator('.portal-session-row').filter({ hasText: 'Phát triển ứng dụng Web' }).filter({ hasText: '13:00' }).getByRole('button', { name: 'Vào lớp' }).click()
+  await expect(page.getByRole('button', { name: 'Đổi buổi học' })).toContainText('13:00–16:30')
+  await expect(page.getByLabel('Tiến độ điểm danh')).toHaveAttribute('value', '0')
+  await page.screenshot({ path: info.outputPath('demo-selected-session.png') })
+})
+
+test('demo: nhập mã rồi Sinh viên tiếp theo không dùng lại mã cũ', async ({ page }) => {
+  await login(page)
+  await page.goto('/#/app/attendance?course=WEB301')
+  await page.getByRole('button', { name: 'Nhập mã sinh viên', exact: true }).click()
+  await page.getByLabel('Mã sinh viên', { exact: false }).fill('SV004')
+  await confirmDemo(page)
+  await page.getByRole('button', { name: 'Sinh viên tiếp theo', exact: true }).click()
+  await expect(page.locator('.server-person-context')).toContainText('Võ Khánh Linh')
+  await expect(page.getByLabel('Mã sinh viên', { exact: false })).toHaveCount(0)
+  await page.getByLabel('Mật khẩu điểm danh', { exact: false }).fill('123456')
+  await page.getByRole('button', { name: 'Tiếp tục đến camera' }).click()
+  await expect(page.getByRole('heading', { name: 'Xác thực khuôn mặt', exact: true })).toBeVisible()
+})
+
+test('demo: kết quả điểm danh mở báo cáo đúng ngày và ca vừa thao tác', async ({ page }, info) => {
+  const db = seedData()
+  db.courses[0].schedules.push({ ...db.courses[0].schedules[0], id: 'WEB_S2', start: '13:00', end: '16:30' })
+  const previous = new Date(`${today()}T12:00:00`)
+  previous.setDate(previous.getDate() - 7)
+  const date = `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, '0')}-${String(previous.getDate()).padStart(2, '0')}`
+  await login(page, db)
+  await page.goto('/#/app/attendance?course=WEB301')
+  await page.getByRole('button', { name: 'Đổi buổi học' }).click()
+  await page.getByLabel('Ngày học', { exact: true }).fill(date)
+  await page.getByLabel('Ca học', { exact: true }).selectOption('WEB_S2')
+  await page.getByRole('button', { name: 'Xem danh sách lớp' }).click()
+  await page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' }).getByRole('button', { name: 'Điểm danh', exact: true }).click()
+  await confirmDemo(page)
+  await page.getByRole('button', { name: 'Xem báo cáo', exact: true }).click()
+  await expect(page.getByLabel('Ngày học', { exact: true })).toHaveValue(date)
+  await expect(page.getByLabel('Ca học', { exact: true })).toHaveValue('WEB_S2')
+  const row = page.getByRole('table', { name: 'Báo cáo điểm danh' }).getByRole('row').filter({ hasText: 'Phạm Quốc Huy' })
+  await expect(row).toContainText(/Đúng giờ|Muộn/)
+  await page.screenshot({ path: info.outputPath('demo-report-session.png') })
+})
+
+test('demo: quay từ email về báo cáo giữ tab, ngày, tìm kiếm và trạng thái', async ({ page }, info) => {
+  await login(page)
+  await page.goto('/#/app/reports?course=WEB301')
+  await page.getByRole('tab', { name: 'Lịch sử ghi nhận', exact: true }).click()
+  await page.getByLabel('Từ ngày', { exact: true }).fill(today())
+  await page.getByLabel('Đến ngày', { exact: true }).fill(today())
+  await page.getByPlaceholder('Tìm mã hoặc tên sinh viên…').fill('Gia Han')
+  await page.getByLabel('Trạng thái', { exact: true }).selectOption('LATE')
+  await page.getByRole('button', { name: 'Chuẩn bị email', exact: true }).click()
+  await page.getByText('Phạm vi báo cáo đính kèm', { exact: true }).click()
+  await expect(page.getByText('Lịch sử ghi nhận · 1 kết quả', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Chọn lại bộ lọc tại báo cáo', exact: true }).click()
+  await expect(page.getByRole('tab', { name: 'Lịch sử ghi nhận', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByLabel('Từ ngày', { exact: true })).toHaveValue(today())
+  await expect(page.getByLabel('Đến ngày', { exact: true })).toHaveValue(today())
+  await expect(page.getByPlaceholder('Tìm mã hoặc tên sinh viên…')).toHaveValue('Gia Han')
+  await expect(page.getByLabel('Trạng thái', { exact: true })).toHaveValue('LATE')
+  await expect(page.getByRole('table', { name: 'Báo cáo điểm danh' }).getByRole('row')).toHaveCount(2)
+  const from = await page.getByLabel('Từ ngày', { exact: true }).boundingBox()
+  const to = await page.getByLabel('Đến ngày', { exact: true }).boundingBox()
+  expect(Math.abs(from.y - to.y)).toBeLessThan(1)
+  expect(Math.abs(from.width - to.width)).toBeLessThan(1)
+  await page.screenshot({ path: info.outputPath('demo-report-restored.png') })
+})
+
+test('demo: dữ liệu từ hôm trước vẫn giữ sinh viên và mở lại buổi có lịch, không reset dữ liệu', async ({ page }, info) => {
+  const db = seedData(), yesterday = new Date(`${today()}T12:00:00`)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const date = localDate(yesterday)
+  db.courses[0].schedules[0].day = yesterday.getDay()
+  db.attendance = db.attendance.map(row => ({ ...row, date }))
+  await login(page, db)
+  await page.goto('/#/app/attendance?course=WEB301')
+  await expect(page.getByText('Môn có 8 sinh viên đã ghi danh.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Nhập mã sinh viên', exact: true })).toBeDisabled()
+  await page.screenshot({ path: info.outputPath('demo-no-session-guidance.png') })
+  const before = await page.evaluate(() => localStorage.getItem('iriaegis.business-demo.v1'))
+  await page.getByRole('button', { name: `Xem buổi ${date.split('-').reverse().join('/')}`, exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Đổi buổi học' })).toContainText(date.split('-').reverse().join('/'))
+  await expect(page.getByRole('table', { name: 'Danh sách điểm danh' }).getByRole('row')).toHaveCount(9)
+  await expect(page.getByRole('row').filter({ hasText: 'Phạm Quốc Huy' }).getByRole('button', { name: 'Điểm danh', exact: true })).toBeEnabled()
+  expect(await page.evaluate(() => localStorage.getItem('iriaegis.business-demo.v1'))).toBe(before)
+  await page.screenshot({ path: info.outputPath('demo-existing-data-restored.png') })
+})

@@ -24,7 +24,7 @@ function Content({ path }) {
   const { actor, logout, flash, setFlash } = usePortal(), [leaving, setLeaving] = useState(false)
   const [onboarding, setOnboarding] = useState(false)
   useEffect(() => { setOnboarding(!!actor?.firstLogin && !actor.photo) }, [actor?.id])
-  const raw = path.replace(/^#\/?app\/?/, '').split('?'), parts = raw[0].split('/'), page = parts[0] || 'home', id = decodeURIComponent(parts[1] || ''), course = new URLSearchParams(raw[1]).get('course')
+  const raw = path.replace(/^#\/?app\/?/, '').split('?'), parts = raw[0].split('/'), page = parts[0] || 'home', id = decodeURIComponent(parts[1] || ''), params = new URLSearchParams(raw[1]), course = params.get('course')
   useEffect(() => { setFlash(null) }, [path])
   if (!actor) return <Auth page={page} />
   const nav = [['home', 'Hôm nay', HomeIcon], ['courses', 'Môn học', BookOpen], ['students', 'Sinh viên', Users], ['attendance', 'Điểm danh', CalendarCheck], ['reports', 'Lịch sử & báo cáo', ClipboardList], ['email', 'Email báo cáo', Mail], ['mock-attendance', 'Điểm danh thử', CalendarCheck], ...(isSuper(actor) ? [['admins', 'Quản trị viên', ShieldCheck], ['backups', 'Sao lưu', Database]] : []), ['profile', 'Hồ sơ của tôi', UserCircle], ['biometrics', 'Sinh trắc học', ShieldCheck], ['settings', 'Thiết lập demo', Settings2]]
@@ -33,8 +33,8 @@ function Content({ path }) {
   else if (page === 'courses' && id) content = <CourseDetail key={id} id={id} />
   else if (['students', 'admins'].includes(page) && id) content = <PersonDetail key={id} entity={page} id={id} />
   else if (['courses', 'students', 'admins'].includes(page)) content = <Catalog key={page} entity={page} />
-  else if (page === 'attendance') content = <Attendance key={course || 'all'} initialCourse={course} />
-  else if (page === 'reports') content = <Reports key={course || 'all'} initialCourse={course} />
+  else if (page === 'attendance') content = <Attendance key={raw[1] || 'all'} initialCourse={course} params={params} />
+  else if (page === 'reports') content = <Reports key={raw[1] || 'all'} initialCourse={course} params={params} />
   else if (page === 'email') content = <EmailPage key={raw[1] || 'all'} initialCourse={course} params={new URLSearchParams(raw[1])} />
   else if (page === 'mock-attendance') content = <MockAttendance />
   else if (page === 'biometrics') content = <Biometrics />

@@ -30,6 +30,8 @@
 .portal-layout .session-context small { display: block; margin-top: 5px; color: var(--ui-muted); font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .portal-layout .session-context-edit { flex: none; display: flex; align-items: center; gap: 2px; font-size: 13px; color: var(--ui-action); }
 .portal-layout .session-picker { display: grid; gap: 16px; }
+.portal-layout .portal-date-range { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.portal-layout .portal-date-range > :first-child { grid-column: auto; }
 .portal-layout .session-picker .portal-filter-grid { display: grid; grid-template-columns: minmax(0,1fr); margin: 0; }
 .portal-layout .attendance-progress { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; margin: 12px 0; font-size: 12px; color: var(--ui-muted); font-variant-numeric: tabular-nums; }
 .portal-layout .attendance-progress strong { color: var(--ui-text); font-size: 14px; }
