@@ -2,13 +2,13 @@
 
 ## 1. Bản đang dùng
 
-Web hiện có các lớp **chớp mắt → quay hai phía → chính diện → đo phản xạ đỏ/xanh → MiniVision**. Ba lớp chủ động được chuyển từ code Android nhóm 4 sang JavaScript; MiniVision vẫn gọi server nhóm 4, không viết lại model hoặc đổi ngưỡng server.
+Web hiện có các lớp **chớp mắt → quay hai phía → chính diện → đo phản xạ đỏ/xanh quanh khung mặt → MiniVision**. Bản cập nhật ngày 17/11 dùng Android nhóm 4 tại `a9be597ba66f99d9f117871ef17d9da234780c81`. Ba lớp chủ động được chuyển sang JavaScript; MiniVision vẫn gọi server nhóm 4, không viết lại model hoặc đổi ngưỡng server.
 
 Đây là triển khai luồng liveness trên trình duyệt, chưa phải chứng nhận độ chính xác tương đương Android trên mọi camera. Đối sánh danh tính và liên kết kết quả liveness với lượt điểm danh trên server nhóm 1 vẫn là phần riêng chưa có hợp đồng API; không gọi kết quả liveness là xác nhận đúng sinh viên.
 
 Nguồn đã đọc và đối chiếu:
 
-- [Android nhóm 4](https://github.com/Long965/IrisSample-IriAegis-26T/tree/be89383530aa5845cf793a7cd4db90478f20f445): `LivenessLogic.java`, `FaceCaptureActivity.java`, `AntiSpoofHelper.java`, `FaceMatchHelper.java`.
+- [Android nhóm 4 — bản hiện tại](https://github.com/Long965/IrisSample-IriAegis-26T/tree/a9be597ba66f99d9f117871ef17d9da234780c81): thay đổi `FaceCaptureActivity.java`, phần nội dung hướng dẫn trong `LivenessLogic.java`; `AntiSpoofHelper.java` và `FaceMatchHelper.java` không đổi so với bản đã đọc.
 - [Server nhóm 4](https://github.com/Long965/IrisSample-IriAegis-26T/tree/38e09e8ed42178456876ef14fef3a14fc46a7b15/liveness_detection-main): `main.py`, notebook, model landmark và MiniFASNetV2.
 - Tài liệu nhận kèm `Hỗ trợ tích hợp cho nhóm 2.md` mô tả Android; không phải API document của Web.
 
@@ -45,7 +45,7 @@ Không có nút bỏ qua bước chủ động trong màn nghiệp vụ. Không 
 | Kiểm tra frame đứng/cắt ghép | `liveness-state-machine.js` | Ngưỡng Euler, mũi và mắt; 28 frame tĩnh hoặc 18 frame tĩnh rồi chuyển động; giới hạn nhảy yaw/pitch/roll |
 | `startSingleColorFlashChallenge()` | `src/liveness/flash-challenge.js`, `FullLivenessCamera.jsx` | Baseline ít nhất 150 ms, đỏ/xanh ít nhất 500 ms mỗi màu; bỏ 150 ms đầu sau cập nhật màu, đủ ba frame mới mỗi pha, phục hồi 220 ms |
 | `calculateFaceCoreRGB()` | `flash-challenge.js` | Vùng mặt co vào 22% mỗi cạnh, lấy mẫu RGB cách bốn pixel, không dùng toàn nền ảnh |
-| `evaluateRedBlueRatioCycle()` | `flash-challenge.js` | Cùng công thức R/B, chromaticity, đối xứng baseline và ngưỡng chống cháy sáng |
+| `evaluateRedBlueRatioCycle()` | `flash-challenge.js` | Công thức R/B/chromaticity, ngưỡng 0,018/0,002/0,002, luma 240; baseline đối xứng chỉ là số đo ở bản mới |
 | `Camera.Parameters`/ML Kit | `src/liveness/landmark-input.js`, `FullLivenessCamera.jsx` | Thay bằng MediaPipe landmark và MediaStreamTrack; là phần chuyển nền tảng, không phải Java chạy trong browser |
 | `AntiSpoofHelper` | `src/liveness/client.js` → `main.py` nhóm 4 | Dùng MiniFASNetV2 `.pth` server thay runtime TFLite Android; giữ nguyên verdict/threshold từ server |
 | MobileFaceNet đối sánh 192 chiều | Chưa có API/runtime đối sánh Web trong phạm vi bàn giao | Không tự giả lập xác minh danh tính sau khi liveness đạt |
@@ -72,11 +72,13 @@ shift = R_red / (B_red + 1) - R_blue / (B_blue + 1)
 normRed = R_red / sum(red) - R_blue / sum(blue)
 normBlue = B_blue / sum(blue) - B_red / sum(red)
 
-Đạt khi shift ≥ 0,280; normRed ≥ 0,040; normBlue ≥ 0,040
-và R/B đỏ > baseline + 0,035; R/B xanh < baseline - 0,035.
+Đạt khi shift ≥ 0,018; normRed ≥ 0,002; normBlue ≥ 0,002
+và R/B đỏ > R/B xanh.
 ```
 
-Thiếu mẫu hoặc cả hai pha quá chói (luma >215) không đạt. Bản Web bắt buộc có baseline; không cho qua vì mẫu rỗng. Frame trong thời gian ổn định màu hoặc timestamp trùng không tính vào mẫu. Sau flash tắt lớp phủ, phục hồi cấu hình camera và chờ 220 ms trước khi lấy ảnh.
+Đây là ngưỡng **đã được nhóm 4 thay đổi** trong `a9be597`, không phải FE tự hiệu chuẩn từ các ảnh lỗi. Bản cũ `be89383` dùng `0,280 / 0,040 / 0,040`, luma 215 và điều kiện đối xứng baseline. Bản mới tăng giới hạn luma lên 240 và không dùng đối xứng baseline làm điều kiện chấp nhận; Web vẫn lưu chỉ số đối xứng để đối chiếu lịch sử. Thay đổi này làm phép đo dễ đạt hơn, chưa chứng minh độ chính xác/chống giả mạo tốt hơn.
+
+Thiếu mẫu hoặc cả hai pha quá chói (luma >240) không đạt. Bản Web vẫn thu đủ mẫu baseline; không cho qua vì mẫu rỗng. Frame trong thời gian ổn định màu hoặc timestamp trùng không tính vào mẫu. Sau flash tắt màu vùng ngoài khung, phục hồi cấu hình camera và chờ 220 ms trước khi lấy ảnh.
 
 Sau phản hồi iPhone, bộ điều phối Web tính thời gian pha từ khi React commit màu và đi qua hai `requestAnimationFrame`, không chỉ từ lúc yêu cầu đổi màu. Đây là cách chờ lịch vẽ của trình duyệt, **không đo được chính xác lúc màn hình vật lý phát màu**. Dùng `mediaTime` của callback video nếu có; frame có timestamp trước khoảng ổn định màu không được tính. Mỗi pha cần ít nhất ba frame mới; nếu camera chậm thì pha kéo dài tối đa 1.200 ms thay vì chuyển màu khi chưa đủ mẫu. Thiếu frame hoặc không nhận được xác nhận cập nhật màu sẽ thất bại; không tăng số lần chớp sáng hay hạ các ngưỡng nhóm 4.
 
@@ -232,3 +234,31 @@ Sau sửa watchdog, người dùng gửi hai lần không đạt: `shift/normR/n
 Đã thêm `failedChecks` vào kết quả và thu RGB trung bình từng frame được nhận, kèm thời gian sau xác nhận cập nhật màu. Nút **Tải số đo ánh sáng (.json)** xuất báo cáo cục bộ không có ảnh, token hoặc tài khoản, không gửi tự động. Giữ nguyên ngưỡng và phương pháp trung bình; không lấy riêng các frame có điểm cao hoặc làm tròn để cho đạt. Kiểm thử hồi quy gồm số đo fail của người dùng, số đo PC pass và xuất JSON trên WebKit/Chrome.
 
 Xem [báo cáo riêng cho nhóm 4](BAO-CAO-LIVENESS-IOS.md). Việc bổ sung thông tin đo chưa giải quyết được sai từ chối trên camera iPhone thật; cần dữ liệu thiết bị và hiệu chuẩn/kiểm chứng của nhóm 4 trước khi thay đổi gate hoặc thuật toán.
+
+## 7. Cập nhật nguồn nhóm 4 ngày 17/11/2026
+
+### Phiên bản và khôi phục
+
+- Trước cập nhật đã push Web tại `63b5614` trên `HuyHoang`; `main` không thay đổi.
+- Tag khôi phục: `backup/pre-liveness-update-20261117-203732`. Source ZIP, Git bundle đã kiểm tra đầy đủ lịch sử và phần bot chưa commit được lưu ngoài repo tại `../iris-aegis-backups/before-liveness-update-20261117-203732/`.
+- Android mới ở worktree riêng `../iris-aegis-group4-update-a9be597/`, giữ checkout cũ. Nhánh `task1.1_Androi_Liveness_detection` tiến từ `be89383` lên `a9be597`; diff chỉ đổi `FaceCaptureActivity.java` và `LivenessLogic.java`. Nhánh `liveness-detection-server` vẫn tại `38e09e8`, không đổi API/model.
+
+### Phần đã chuyển sang Web
+
+1. `FaceOverlayView` → SVG `FaceGuide.jsx`: đường bao trán/cằm 120 đoạn, tâm ở 42% chiều cao, bán kính ngang 34% chiều rộng và bán kính dọc theo công thức Android. Khung Web dùng bề mặt dọc 5:8 để giữ dáng bầu dục; tự giới hạn theo chiều cao màn hình.
+2. Flash chỉ tô vùng ngoài đường bao bằng đỏ/xanh, mặt giữa luôn trong suốt. Mặt nạ đen mờ 70% trước flash; viền đổi theo trạng thái. Ảnh/RGB vẫn đọc từ camera, không đọc màu SVG làm phản xạ.
+3. `checkFaceInCircle()` → `isFaceInsideGuide()`: kiểm tra tâm, biên và độ rộng mặt tối thiểu 35% vùng hợp lệ. Xét đúng crop `object-fit: cover` và preview lật gương, dung sai 65/110 theo trạng thái. Android dùng pixel View, Web dùng CSS pixel nên không khẳng định kích thước vật lý giống nhau. Adapter Web tiếp tục quy tắc tạm ngừng/reset khi mất theo dõi đã có; mặt ngoài khung không được tính tiến độ.
+4. Đồng bộ công thức/ngưỡng mới ở trên. `FlashSampler.result().profile` lưu revision, kiểu kích thích `face-contour-perimeter`, luma và việc không bắt đối xứng baseline. Không đổi kết quả các báo cáo cũ thiếu profile.
+5. Android đặt độ sáng cửa sổ 100% qua `WindowManager`. Web chỉ nhắc tăng sáng thủ công, không tuyên bố đã chỉnh độ sáng hệ điều hành. [Screen](https://developer.mozilla.org/en-US/docs/Web/API/Screen) và [Wake Lock](https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API) không được coi là thay thế tương đương thao tác native này.
+
+Ngưỡng chớp mắt/quay đầu, bộ bảo vệ gián đoạn Web, crop MiniVision, endpoint multipart, ngưỡng server 0,108 và việc chặn REAL cũ sau hủy giữ nguyên. Không thêm đối sánh danh tính, endpoint Nhóm 1 hoặc sửa source backend.
+
+### Kiểm tra bản cập nhật
+
+- Node: 70 kiểm thử đạt, gồm biên ngưỡng mới, bỏ điều kiện baseline đúng upstream, luma 240, vị trí/kích thước mặt và mapping crop/lật gương.
+- Chrome desktop/mobile: chạy 48 ca camera/liveness; 46 đạt trong lượt toàn bộ, hai ca còn lại chạm assertion kích thước telemetry cũ toàn màn hình. Sau sửa assertion sang vùng preview mới, chạy lại cả hai đạt; không còn ca thất bại chưa xử lý.
+- WebKit mô phỏng: 24/24 ca camera/liveness đạt. Raster SVG xác nhận alpha vùng mặt bằng 0 và vùng ngoài đúng đỏ/xanh; mặt quá nhỏ không bắt đầu challenge/gọi API. Đã xem ảnh mobile và flash vùng ngoài khung.
+- Smoke test dùng camera/landmark tổng hợp nhưng **MiniVision thật**: Chrome và ba lượt WebKit liên tiếp chạy đủ active flow, POST qua proxy, nhận 200, UI hiển thị đúng verdict. Chưa đánh giá người thật/chống giả mạo trên iPhone vật lý.
+- Smoke test từng gặp file multipart rỗng gián đoạn khi bật interception của Playwright WebKit. Probe độc lập tái hiện với interception; gửi không qua interception thành công. Công cụ smoke ngoài repo gỡ interception sau khi nạp model giả lập, không sửa upload sản phẩm/backend để né lỗi test. Playwright cũng ghi [giới hạn WebKit multipart khi intercept](https://github.com/microsoft/playwright/blob/main/tests/page/page-request-intercept.spec.ts). Không quy lỗi này cho Safari trên iPhone thật.
+
+Để thử bản mới, tải lại trang, tăng độ sáng màn hình thủ công và chạy đủ phiên. Cần thử cả người thật lẫn ảnh/điện thoại phát lại trên thiết bị thật; các JSON thu với flash toàn màn hình trước đó không chứng minh bản flash vùng ngoài khung đã ổn định.

@@ -2,6 +2,8 @@
 
 Ngày ghi nhận: 15/11/2026. Tài liệu dùng để trao đổi với nhóm 4; chưa phải kết luận nguyên nhân phần cứng hoặc kết quả đánh giá độ chính xác.
 
+**Phiên bản:** số đo ở mục 1–10 được thu trước cập nhật nhóm 4 `a9be597`, với flash toàn màn hình, ngưỡng 0,280/0,040/0,040 và đối xứng baseline. Bản Web hiện đã dùng flash vùng ngoài khung và ngưỡng mới của nhóm 4; xem [mục cập nhật](LIVENESS.md#7-cập-nhật-nguồn-nhóm-4-ngày-17112026). Không áp ngưỡng mới để đổi kết quả lịch sử thành bằng chứng bản mới đã ổn định trên iPhone.
+
 ## 1. Hiện tượng và số đo
 
 Người dùng đã hoàn thành luồng trên laptop. Hai lần thử bằng người thật trên iPhone đi đến kiểm tra ánh sáng nhưng không đạt. Video vẫn được xử lý qua nguồn `timer`, GPU; không còn bị dừng ở lỗi watchdog trong hai lần này.

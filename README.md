@@ -2,9 +2,9 @@
 
 **Nhánh phát triển chính: `HuyHoang`.** Tiếp tục phát triển và kiểm thử tại đây; đợt cập nhật này không thay đổi nhánh `main`.
 
-**Liveness nhóm 4:** [LIVENESS.md](LIVENESS.md). Đã chuyển luồng Android sang Web: chớp mắt → quay hai phía → đo flash đỏ/xanh → API MiniVision. Thử tại `/#/camera` hoặc bước điểm danh. Backend nhóm 4 chạy cổng 8000, proxy `/liveness-api`. Cần thử camera/iPhone thật để xác nhận chất lượng; chưa có đối sánh danh tính hoặc bằng chứng do server nhóm 1 xác minh.
+**Liveness nhóm 4:** [LIVENESS.md](LIVENESS.md). Đã cập nhật Android `a9be597`: chớp mắt → quay hai phía → kiểm tra khung mặt/flash vùng ngoài khung → API MiniVision. Đồng bộ ngưỡng mới do nhóm 4 cung cấp: `0,018 / 0,002 / 0,002`; API MiniVision không đổi. Thử tại `/#/camera` hoặc bước điểm danh; tăng sáng màn hình thủ công trước khi bắt đầu. Backend nhóm 4 chạy cổng 8000, proxy `/liveness-api`. Cần thử camera/iPhone thật để xác nhận chất lượng; chưa có đối sánh danh tính hoặc bằng chứng do server nhóm 1 xác minh.
 
-**Tình huống iPhone người thật không đạt flash:** [báo cáo và hướng thu số đo](BAO-CAO-LIVENESS-IOS.md). Hiện chưa xác nhận khắc phục trên thiết bị thật. Khi lỗi sau bước ánh sáng, bấm **Lưu thông tin lỗi** để tải `iriaegis-camera-support.json`, kể cả không bật debug. File chứa số đo của tối đa 5 lượt đo ánh sáng gần nhất trong trang, gồm cả lượt đạt/không đạt; không chứa ảnh, video, tài khoản hoặc token. Không tải lại trang giữa các lượt nếu cần đối chiếu. Công thức/ngưỡng nhóm 4 không bị nới để cho qua.
+**Tình huống iPhone người thật không đạt flash:** [báo cáo và hướng thu số đo](BAO-CAO-LIVENESS-IOS.md). Hiện chưa xác nhận bản mới khắc phục trên thiết bị thật. Sau lỗi ánh sáng, bấm **Lưu thông tin lỗi** để tải JSON, kể cả không bật debug. File chứa tối đa 5 lượt trong trang và profile nguồn nhóm 4, không chứa ảnh/video/tài khoản/token. Không tải lại trang giữa các lượt nếu cần đối chiếu. Kết quả cũ với flash toàn màn hình được giữ nguyên trong báo cáo lịch sử.
 
 **Đối chiếu API mới nhất:** [DOI-CHIEU-API-SERVER.md](DOI-CHIEU-API-SERVER.md) — ma trận 38 operation Web, các phần thiếu đã bổ sung, giới hạn và mâu thuẫn trong YAML. Chạy `npm.cmd run audit:api` để xem ma trận.
 
