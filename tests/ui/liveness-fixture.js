@@ -13,13 +13,14 @@ export async function fullCameraFixture(page, { reflected = true, locks = true, 
         if(this.calls===2){const until=performance.now()+(window.inferenceStallMs||0);while(performance.now()<until){/* Slow first live inference. */}}
         if(!this.primed){this.primed=true;const until=performance.now()+(window.warmupMs||0);while(performance.now()<until){/* Simulate cold shader compilation. */}}
         if(document.querySelector('[data-flash-phase]'))throw new Error('Do not run landmark inference on flash-colored frames');
-        const {yaw=0,pitch=0,roll=0,blink=.05,count=1,nose=.5}=window.facePose||{};
+        const {yaw=0,pitch=0,roll=0,blink=.05,count=1,nose=.5,faceScale=1}=window.facePose||{};
         const points=Array.from({length:478},()=>({x:.5,y:.5,z:0}));
         const halfHeight=blink>.3 ? .003 : .012;
         for(const [a,b,c,d,e,f,x] of [[362,385,387,263,373,380,.55],[33,160,158,133,153,144,.35]]){
           points[a]={x,y:.45};points[d]={x:x+.1,y:.45};points[b]={x:x+.02,y:.45-halfHeight};points[c]={x:x+.08,y:.45-halfHeight};points[e]={x:x+.08,y:.45+halfHeight};points[f]={x:x+.02,y:.45+halfHeight};
         }
         points[10]={x:.2,y:.2};points[152]={x:.8,y:.8};points[1]={x:nose+Math.sin(performance.now()*.01)*.001,y:.5};
+        for(const point of points){point.x=.5+(point.x-.5)*faceScale;point.y=.5+(point.y-.5)*faceScale;}
         // Column-major rotation Y*X*Z, including the ±180° Euler boundary.
         const [x,y,z]=[pitch,yaw,roll].map(a=>a*Math.PI/180);
         const [cx,sx,cy,sy,cz,sz]=[Math.cos(x),Math.sin(x),Math.cos(y),Math.sin(y),Math.cos(z),Math.sin(z)];

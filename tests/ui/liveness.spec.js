@@ -47,7 +47,7 @@ test('full: no measured reflection fails before API despite potential REAL', asy
   const report = JSON.parse(await readFile(await download.path(), 'utf8'))
   expect(report.kind).toBe('group4-web-flash-measurement-v1')
   expect(report.flash.failedChecks).toContain('normBlue')
-  expect(report.flash.limits.normBlue).toBe(.04)
+  expect(report.flash.limits.normBlue).toBe(.002)
   expect(report.flash.trace.length).toBeGreaterThanOrEqual(9)
   expect(JSON.stringify(report)).not.toContain('data:image/')
   expect(requests).toBe(0)

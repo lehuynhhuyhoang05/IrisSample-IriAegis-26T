@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { LivenessStateMachine, angleDistance } from './liveness/liveness-state-machine.js'
-import { checkFlashMetrics, evaluateFlash, FlashSampler, lockCamera } from './liveness/flash-challenge.js'
+import { FLASH_LIMITS, FLASH_PROFILE, checkFlashMetrics, evaluateFlash, FlashSampler, lockCamera } from './liveness/flash-challenge.js'
 import { EyeCalibration, eyeAspectRatio } from './liveness/landmark-input.js'
 
 function frames() {
@@ -44,7 +44,7 @@ test('group 4 port: frozen feature sequence fails before accepting a replay sequ
   assert.equal(d.logic.state, 'failed')
   assert.match(d.logic.message, /đứng hình/)
 })
-test('flash: group 4 chromaticity/baseline thresholds, missing samples and no reflection fail', () => {
+test('flash: upstream perimeter profile still rejects missing samples, flat colors and glare', () => {
   assert.equal(evaluateFlash(samples).passed, true)
   assert.equal(evaluateFlash({ ...samples, blue: null }).passed, false)
   assert.equal(evaluateFlash({ baseline: samples.baseline, red: samples.baseline, blue: samples.baseline }).passed, false)
@@ -175,9 +175,21 @@ test('watchdog: switching frame clock discards every challenge step without exte
   assert.equal(d.logic.tick(25001).state, 'failed')
 })
 
-test('flash: reported iPhone measurements remain unconfirmed with exact failed checks; no rounding or lower threshold', () => {
-  assert.deepEqual(checkFlashMetrics({ shift: .347, normRed: .057, normBlue: .038, symmetric: true }), { passed: false, failedChecks: ['normBlue'] })
-  assert.deepEqual(checkFlashMetrics({ shift: .278, normRed: .046, normBlue: .032, symmetric: true }), { passed: false, failedChecks: ['shift', 'normBlue'] })
-  assert.equal(checkFlashMetrics({ shift: .682, normRed: .083, normBlue: .069, symmetric: true }).passed, true)
-  assert.equal(checkFlashMetrics({ shift: .28, normRed: .04, normBlue: .039999, symmetric: true }).passed, false)
+test('flash: pin group 4 a9be597 thresholds; legacy iPhone numbers now meet the new profile, not proof of physical success', () => {
+  assert.deepEqual(FLASH_LIMITS, { shift: .018, normRed: .002, normBlue: .002 })
+  assert.equal(FLASH_PROFILE.sourceRevision, 'a9be597ba66f99d9f117871ef17d9da234780c81')
+  assert.equal(checkFlashMetrics({ shift: .347, normRed: .057, normBlue: .038, symmetric: true }).passed, true)
+  assert.equal(checkFlashMetrics({ shift: .278, normRed: .046, normBlue: .032, symmetric: true }).passed, true)
+  assert.equal(checkFlashMetrics({ shift: .018, normRed: .002, normBlue: .002 }).passed, true)
+  assert.deepEqual(checkFlashMetrics({ shift: .018, normRed: .002, normBlue: .001999 }), { passed: false, failedChecks: ['normBlue'] })
+  assert.equal(checkFlashMetrics({ shift: .017999, normRed: .002, normBlue: .002 }).passed, false)
+})
+
+test('flash: a9be597 removes baseline symmetry and raises the double-luma ceiling to 240', () => {
+  const asymmetric = evaluateFlash({ ...samples, baseline: { r: 190, g: 80, b: 10, count: 3 } })
+  assert.equal(asymmetric.symmetric, false)
+  assert.equal(asymmetric.passed, true)
+  assert.equal(evaluateFlash({ ...samples, red: { r: 245, g: 230, b: 220, count: 3 }, blue: { r: 220, g: 230, b: 245, count: 3 } }).passed, true)
+  assert.equal(evaluateFlash({ ...samples, red: { r: 255, g: 245, b: 240, count: 3 }, blue: { r: 240, g: 245, b: 255, count: 3 } }).passed, false)
+  assert.equal(evaluateFlash({ ...samples, red: samples.blue, blue: samples.red }).passed, false)
 })
