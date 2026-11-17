@@ -100,3 +100,24 @@ test('iPhone-sized attendance reports rejected reflection without exposing the d
   expect(JSON.stringify(report)).not.toContain('data:image')
   expect(requests).toBe(0)
 })
+
+test('gateway failure after flash stays unverified, shows Vietnamese guidance and permits a fresh attempt', async ({ page }, info) => {
+  await fullCameraFixture(page, { diagnostics: false })
+  let recovered = false, requests = 0
+  await page.route('**/liveness-api/api/v1/predict-liveness', route => {
+    requests++
+    return recovered ? route.fulfill({ json: { status: 'success', result: 'REAL', is_real: true, real_score: .9, spoof_score: .01, threshold_used: .108 } })
+      : route.fulfill({ status: 520, json: { detail: 'The origin web server returned an invalid or incomplete response to Cloudflare.' } })
+  })
+  await openAttendanceCamera(page); await startFull(page); await completeActive(page, expect)
+  await expect(page.getByRole('alert')).toContainText('Kết nối đến dịch vụ xác thực bị gián đoạn. Hãy thử lại.')
+  await expect(page.getByText('The origin web server', { exact: false })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Sử dụng ảnh này', exact: true })).toBeDisabled()
+  expect(requests).toBe(1)
+  await page.screenshot({ path: info.outputPath('camera-gateway-error.png') })
+  recovered = true
+  await page.getByRole('button', { name: 'Xác thực lại', exact: true }).click()
+  await completeActive(page, expect)
+  await expect(page.getByRole('button', { name: 'Sử dụng ảnh này', exact: true })).toBeEnabled()
+  expect(requests).toBe(2)
+})

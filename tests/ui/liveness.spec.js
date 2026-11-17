@@ -60,7 +60,7 @@ test('full: MiniVision FAKE and errors never unlock image after active pass', as
   await expect(page.getByRole('alert')).toContainText('Ảnh chưa đạt kiểm tra người thật')
   await expect(page.getByRole('button', { name: 'Sử dụng ảnh này', exact: true })).toBeDisabled()
   fail = true; await page.getByRole('button', { name: 'Xác thực lại', exact: true }).click(); await completeActive(page, expect)
-  await expect(page.getByRole('alert')).toContainText('Model đang khởi động')
+  await expect(page.getByRole('alert')).toContainText('Dịch vụ xác thực tạm thời chưa sẵn sàng')
   await expect(page.getByRole('button', { name: 'Sử dụng ảnh này', exact: true })).toBeDisabled()
 })
 test('full: cancel flash removes colors, releases camera and never calls API', async ({ page }) => {

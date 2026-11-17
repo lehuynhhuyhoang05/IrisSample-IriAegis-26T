@@ -30,13 +30,24 @@ test('group 4: dữ liệu thiếu, nhãn mâu thuẫn, điểm sai kiểu đề
 })
 
 test('group 4: lỗi HTTP, mạng, timeout và hủy không tạo kết quả đạt', async () => {
-  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Không kết nối được dịch vụ liveness.' }, { status: 502 }) }), /Không kết nối được dịch vụ liveness/)
-  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Model unavailable' }, { status: 503 }) }), /Model unavailable/)
+  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Không kết nối được dịch vụ liveness.' }, { status: 502 }) }), /Kết nối đến dịch vụ xác thực bị gián đoạn/)
+  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Model unavailable' }, { status: 503 }) }), /tạm thời chưa sẵn sàng/)
   await assert.rejects(predictLiveness(blob, { fetcher: async () => { throw new TypeError('Offline') } }), /Không kết nối được/)
   const hanging = (_, { signal }) => new Promise((resolve, reject) => { if (signal.aborted) reject(signal.reason); else signal.addEventListener('abort', () => reject(signal.reason), { once: true }) })
   await assert.rejects(predictLiveness(blob, { fetcher: hanging, timeout: 5 }), /phản hồi quá lâu/)
   const controller = new AbortController(); controller.abort()
   await assert.rejects(predictLiveness(blob, { signal: controller.signal, fetcher: hanging }), { name: 'AbortError' })
+})
+
+test('gateway HTML/JSON and internal errors are not rendered as raw infrastructure diagnostics', async () => {
+  for (const status of [502, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530]) {
+    for (const response of [new Response('<html>The origin web server returned an invalid or incomplete response to Cloudflare.</html>', { status }), Response.json({ detail: 'The origin web server returned an invalid or incomplete response to Cloudflare.' }, { status })]) {
+      await assert.rejects(predictLiveness(blob, { fetcher: async () => response }), failure => failure.status === status && failure.message === 'Kết nối đến dịch vụ xác thực bị gián đoạn. Hãy thử lại.')
+    }
+  }
+  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'Lỗi xử lý hệ thống: private stack trace' }, { status: 500 }) }), failure => failure.status === 500 && !failure.message.includes('private'))
+  await assert.rejects(predictLiveness(blob, { fetcher: async () => Response.json({ detail: 'File ảnh không hợp lệ.' }, { status: 400 }) }), /File ảnh không hợp lệ/)
+  await assert.rejects(predictLiveness(blob, { fetcher: async () => new Response('<html>no verdict</html>', { status: 200 }) }), /kết quả không hợp lệ/)
 })
 
 test('group 4: không gửi file rỗng/sai MIME; crop 2.7 theo notebook, không vượt ảnh', async () => {

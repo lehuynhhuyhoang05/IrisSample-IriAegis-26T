@@ -31,12 +31,22 @@ export async function predictLiveness(blob, { signal, fetcher = globalThis.fetch
     if (signal?.aborted) throw new DOMException('Đã hủy kiểm tra', 'AbortError')
     const data = await response.json().catch(() => null)
     if (signal?.aborted) throw new DOMException('Đã hủy kiểm tra', 'AbortError')
-    if (!response.ok) throw new Error(typeof data?.detail === 'string' ? data.detail : `Server liveness trả lỗi ${response.status}. Hãy kiểm tra dịch vụ liveness.`)
+    if (!response.ok) {
+      // Gateway/model diagnostics are not user instructions. In particular,
+      // Cloudflare may return its English error page as HTML or JSON detail.
+      const gateway = [502, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530].includes(response.status)
+      const message = gateway ? 'Kết nối đến dịch vụ xác thực bị gián đoạn. Hãy thử lại.'
+        : response.status === 503 ? 'Dịch vụ xác thực tạm thời chưa sẵn sàng. Hãy thử lại sau.'
+          : response.status >= 500 ? 'Dịch vụ xác thực đang gặp lỗi. Hãy thử lại sau.'
+            : typeof data?.detail === 'string' ? data.detail : 'Không gửi được ảnh để xác thực. Hãy thử lại.'
+      const failure = new Error(message); failure.status = response.status
+      throw failure
+    }
     return validateLivenessResult(data)
   } catch (error) {
     if (signal?.aborted) throw new DOMException('Đã hủy kiểm tra', 'AbortError')
-    if (timedOut) throw new Error('Server liveness phản hồi quá lâu. Hãy thử kiểm tra lại.', { cause: error })
-    if (error instanceof TypeError) throw new Error('Không kết nối được server liveness. Kiểm tra dịch vụ cổng 8000 hoặc cấu hình proxy.', { cause: error })
+    if (timedOut) throw new Error('Dịch vụ xác thực phản hồi quá lâu. Hãy thử lại.', { cause: error })
+    if (error instanceof TypeError) throw new Error('Không kết nối được dịch vụ xác thực. Hãy thử lại.', { cause: error })
     throw error
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort) }
 }
