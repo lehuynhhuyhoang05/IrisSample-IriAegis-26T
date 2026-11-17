@@ -90,8 +90,15 @@ export async function fixture(page) {
     if (recipientPath) {
       const subject = decodeURIComponent(recipientPath[1]), id = Number(recipientPath[2])
       if (method === 'GET') return reply({ items: state.recipients.filter(row => row.subject_id === subject) })
-      if (method === 'POST') { const row = { ...body, subject_id: subject, email_id: 10 + state.recipients.length }; state.recipients.push(row); return reply(row, 201) }
-      if (method === 'PUT') { const row = state.recipients.find(row => row.email_id === id); Object.assign(row, body); return reply(row) }
+      if (method === 'POST') {
+        if (state.failRecipientEmail === body.email_address) { state.failRecipientEmail = ''; return reply({ error: { code: 'TEMPORARY', message: 'Dịch vụ email tạm bận.' } }, 503) }
+        if (state.recipients.some(row => row.subject_id === subject && row.email_address === body.email_address)) return reply({ error: { code: 'DUPLICATE', message: 'Email đã có trong môn.' } }, 409)
+        const row = { ...body, subject_id: subject, email_id: 10 + state.recipients.length }; state.recipients.push(row); return reply(row, 201)
+      }
+      if (method === 'PUT') {
+        if (state.failRecipientEmail === body.email_address) { state.failRecipientEmail = ''; return reply({ error: { code: 'TEMPORARY', message: 'Dịch vụ email tạm bận.' } }, 503) }
+        const row = state.recipients.find(row => row.email_id === id); Object.assign(row, body); return reply(row)
+      }
       if (method === 'DELETE') { state.recipients = state.recipients.filter(row => row.email_id !== id); return route.fulfill({ status: 204 }) }
     }
     if (path.endsWith('/send-report')) return reply({ job_id: 'EMAIL1' }, 202)
