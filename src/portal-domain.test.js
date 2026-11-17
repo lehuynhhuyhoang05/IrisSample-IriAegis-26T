@@ -31,6 +31,25 @@ test('giảng viên không thể sửa môn ngoài phạm vi, quản lý admin h
   assert.throws(() => command(db, 'ADM_LAN', { type: 'delete', entity: 'students', id: 'SV001' }), /Super Admin/)
   assert.throws(() => command(db, 'ADM_LAN', { type: 'save', entity: 'admins', row: { ...db.admins[2], id: 'ADM_NEW' } }), /Super Admin/)
 })
+test('môn học kiểm tra kỳ học, phân công và các ca không trùng trước khi lưu', () => {
+  const db = seedData()
+  const row = {
+    id: 'WEB499', name: 'Kiểm thử lịch', instructorId: 'ADM_LAN', room: 'C.401', semester: 'Học kỳ 2',
+    startDate: '2026-01-01', endDate: '2026-12-31',
+    schedules: [
+      { id: 'WEB499_A', day: 2, start: '09:00', end: '10:00' },
+      { id: 'WEB499_B', day: 2, start: '10:00', end: '11:00' },
+    ],
+  }
+  const saved = command(db, 'SADM_DEMO', { type: 'save', entity: 'courses', row })
+  assert.equal(saved.courses.at(-1).room, 'C.401')
+  assert.equal(saved.courses.at(-1).instructorId, 'ADM_LAN')
+  assert.equal(saved.courses.at(-1).schedules.length, 2)
+  assert.throws(() => command(db, 'SADM_DEMO', { type: 'save', entity: 'courses', row: { ...row, endDate: '2025-12-31' } }), /Ngày học kỳ/)
+  assert.throws(() => command(db, 'SADM_DEMO', { type: 'save', entity: 'courses', row: { ...row, instructorId: 'UNKNOWN' } }), /Giảng viên không tồn tại/)
+  assert.throws(() => command(db, 'SADM_DEMO', { type: 'save', entity: 'courses', row: { ...row, schedules: [row.schedules[0], { ...row.schedules[1], start: '09:30' }] } }), /không được trùng giờ/)
+  assert.equal(db.courses.some(course => course.id === 'WEB499'), false)
+})
 test('bỏ khỏi môn giữ hồ sơ, môn khác và lịch sử; xóa môn chỉ xóa dữ liệu liên quan', () => {
   const db = seedData()
   const removed = command(db, 'SADM_DEMO', { type: 'unenroll', studentId: 'SV001', courseId: 'WEB301' })

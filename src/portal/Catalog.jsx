@@ -63,7 +63,11 @@ export function Catalog({ entity }) {
   const { db, actor, write, setFlash } = usePortal()
   const [query, setQuery] = useState(''), [filter, setFilter] = useState('all'), [edit, setEdit] = useState(undefined), [remove, setRemove] = useState(null), [importing, setImporting] = useState(false)
   const list = entity === 'courses' ? coursesFor(db, actor) : entity === 'students' ? studentsFor(db, actor) : db.admins
-  const rows = list.filter(row => fold(`${row.name} ${row.id} ${row.email || ''} ${row.className || ''}`).includes(fold(query)) && (filter === 'all' || (entity === 'courses' ? filter === 'assigned' ? !!row.instructorId : !row.instructorId : filter === 'photo' ? !!row.photo : !row.photo)))
+  const rows = list.filter(row => {
+    const instructor = entity === 'courses' ? db.admins.find(admin => admin.id === row.instructorId)?.name || '' : ''
+    const searchable = entity === 'courses' ? `${row.name} ${row.id} ${instructor}` : `${row.name} ${row.id} ${row.email || ''} ${row.className || ''}`
+    return fold(searchable).includes(fold(query)) && (filter === 'all' || (entity === 'courses' ? filter === 'assigned' ? !!row.instructorId : !row.instructorId : filter === 'photo' ? !!row.photo : !row.photo))
+  })
   if (entity === 'admins' && !isSuper(actor)) return <Notice tone="warning" title="Không có quyền truy cập">Quản lý quản trị viên dành cho Super Admin.</Notice>
   const actions = row => <div className="ui-row-actions"><IconButton icon={Edit2} label={`Sửa ${row.id}`} onClick={() => setEdit(row)} />{(entity !== 'admins' || row.role !== 'SUPER_ADMIN') && (entity !== 'students' || isSuper(actor)) && <IconButton icon={Trash2} label={`Xóa ${row.id}`} onClick={() => setRemove(row)} />}</div>
   return <>
@@ -82,7 +86,7 @@ export function Catalog({ entity }) {
     <div className="ui-list-footer"><span>{rows.length} / {list.length} {names[entity]}</span><Button variant="quiet" icon={Download} onClick={() => download(csvText(['id', 'name', 'email'], rows.map(r => [r.id, r.name, r.email || ''])), `${entity}.csv`)}>Xuất danh sách đang lọc</Button></div>
     {edit !== undefined && <EntityForm entity={entity} row={edit} onClose={() => setEdit(undefined)} />}
     {importing && <ImportDialog entity={entity} onClose={() => setImporting(false)} />}
-    {remove && <Confirm title={`Xóa ${remove.name}?`} description={entity === 'students' ? 'Xóa hồ sơ khỏi toàn hệ thống, đăng ký môn và lịch sử điểm danh liên quan. Muốn chỉ bỏ khỏi môn, mở chi tiết môn học.' : entity === 'courses' ? `Xóa môn cùng ${db.enrollments.filter(e => e.courseId === remove.id).length} đăng ký, lịch sử và người nhận báo cáo của môn.` : 'Tài khoản sẽ không đăng nhập được nữa. Cần phân công lại môn trước khi xóa.'} requirePassword={entity === 'admins'} onClose={() => setRemove(null)} onConfirm={() => { write({ type: 'delete', entity, id: remove.id }); setFlash({ tone: 'success', text: 'Đã xóa khỏi dữ liệu demo.' }) }} />}
+    {remove && <Confirm title={`Xóa ${remove.name}?`} description={entity === 'students' ? 'Xóa hồ sơ khỏi toàn hệ thống, đăng ký môn và lịch sử điểm danh liên quan. Muốn chỉ bỏ khỏi môn, mở chi tiết môn học.' : entity === 'courses' ? `Thao tác này gỡ ${db.enrollments.filter(e => e.courseId === remove.id).length} đăng ký, xóa ${db.attendance.filter(a => a.courseId === remove.id).length} lượt điểm danh và ${db.recipients.filter(r => r.courseId === remove.id).length} người nhận báo cáo. Hồ sơ sinh viên vẫn được giữ; không thể hoàn tác trong dữ liệu demo.` : 'Tài khoản sẽ không đăng nhập được nữa. Cần phân công lại môn trước khi xóa.'} requirePassword={entity === 'admins'} onClose={() => setRemove(null)} onConfirm={() => { write({ type: 'delete', entity, id: remove.id }); setFlash({ tone: 'success', text: 'Đã xóa khỏi dữ liệu demo.' }) }} />}
   </>
 }
 
