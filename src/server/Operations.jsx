@@ -10,23 +10,43 @@ import { changeMode } from './config.js'
 import { SubjectPicker } from './SubjectPicker.jsx'
 import { JobProgress } from './Jobs.jsx'
 import { changePasswordBody, reportBody } from './contract.js'
+import RecipientImport from './RecipientImport.jsx'
 
 export function ServerEmail({ params }) {
   const { api } = useServer(), task = useTask()
   const [course, setCourse] = useState(params.get('course') || ''), [from, setFrom] = useState(params.get('date_from') || ''), [to, setTo] = useState(params.get('date_to') || '')
   const [form, setForm] = useState(null), [removing, setRemoving] = useState(null), [preview, setPreview] = useState(false), [job, setJob] = useState('')
+  const [importing, setImporting] = useState(false)
   const path = `/subjects/${encodeURIComponent(course)}/email-recipients`, resource = useResource(course ? path : null)
   function changeCourse(value) { task.cancel(); task.setError(''); setCourse(value); setJob(''); setPreview(false) }
   const recipients = resource.data?.items || [], selected = recipients.filter(row => row.is_selected ?? true)
-  return <><PageHeader title="Email báo cáo" /><SubjectPicker value={course} onChange={changeCourse} />
+  const returnPath = params.get('return')
+  function selectRecipients(rows, value) {
+    task.run(async signal => {
+      let changed = 0
+      const updates = rows.filter(row => (row.is_selected ?? true) !== value)
+      try {
+        for (const row of updates) {
+          if (signal.aborted) throw new DOMException('Đã hủy', 'AbortError')
+          await api.request(`${path}/${row.email_id}`, { method: 'PUT', signal, body: { email_address: row.email_address, recipient_name: row.recipient_name, is_selected: value } })
+          changed++
+        }
+      } catch (failure) { if (signal.aborted) throw failure; throw new Error(`Đã cập nhật ${changed}/${updates.length} người nhận. ${failure.message}`, { cause: failure }) }
+      finally { resource.reload(); setJob('') }
+    })
+  }
+  return <>{returnPath?.startsWith('#/app/reports?') && <a className="server-return" href={returnPath}>← Quay lại báo cáo</a>}<PageHeader title="Email báo cáo" /><SubjectPicker value={course} onChange={value => { changeCourse(value); setImporting(false) }} />
     {course && <><div className="portal-filter-grid server-date-range"><Field label="Từ ngày" type="date" value={from} onChange={e => { setFrom(e.target.value); setJob('') }} /><Field label="Đến ngày" type="date" value={to} min={from} onChange={e => { setTo(e.target.value); setJob('') }} /></div>
-      <div className="portal-section-heading"><h2>Người nhận</h2><Button variant="secondary" onClick={() => setForm({ email_address: '', recipient_name: '', is_selected: true })}>Thêm người nhận</Button></div>
-      <ResourceState resource={resource}>{data => <DataTable rowKey="email_id" caption="Người nhận báo cáo" rows={data.items || []} columns={[{ key: 'email_address', label: 'Email', render: row => <span><strong>{row.email_address}</strong><small className="portal-block-muted">{row.recipient_name}</small></span> }, { key: 'is_selected', label: 'Nhận báo cáo', render: row => (row.is_selected ?? true) ? 'Được chọn' : 'Không chọn' }, { key: 'actions', label: 'Thao tác', render: row => <div className="ui-actions"><Button variant="quiet" onClick={() => setForm(row)}>Sửa</Button><Button variant="quiet" onClick={() => setRemoving(row)}>Xóa</Button></div> }]} empty={<EmptyState title="Chưa có người nhận" />} />}</ResourceState>
+      <div className="portal-section-heading"><h2>Người nhận</h2><div className="ui-actions"><Button variant="secondary" disabled={resource.loading || !!resource.error || task.busy} onClick={() => setImporting(true)}>Nhập CSV</Button><Button variant="secondary" disabled={task.busy} onClick={() => setForm({ email_address: '', recipient_name: '', is_selected: true })}>Thêm người nhận</Button></div></div>
+      {recipients.length > 0 && <label className="portal-check"><input type="checkbox" aria-label="Chọn tất cả người nhận" checked={selected.length === recipients.length} ref={node => { if (node) node.indeterminate = selected.length > 0 && selected.length < recipients.length }} disabled={task.busy || resource.loading || !!resource.error} onChange={e => selectRecipients(recipients, e.target.checked)} />Chọn tất cả ({selected.length}/{recipients.length})</label>}
+      {task.busy && <p role="status">Đang cập nhật người nhận…</p>}
+      <ResourceState resource={resource}>{data => <DataTable rowKey="email_id" caption="Người nhận báo cáo" rows={data.items || []} columns={[{ key: 'email_address', label: 'Email', render: row => <span><strong>{row.email_address}</strong><small className="portal-block-muted">{row.recipient_name}</small></span> }, { key: 'is_selected', label: 'Nhận báo cáo', render: row => <label className="portal-check"><input type="checkbox" aria-label={`Chọn ${row.email_address}`} checked={row.is_selected ?? true} disabled={task.busy} onChange={e => selectRecipients([row], e.target.checked)} />{(row.is_selected ?? true) ? 'Được chọn' : 'Không chọn'}</label> }, { key: 'actions', label: 'Thao tác', render: row => <div className="ui-actions"><Button variant="quiet" disabled={task.busy} onClick={() => setForm(row)}>Sửa</Button><Button variant="quiet" disabled={task.busy} onClick={() => setRemoving(row)}>Xóa</Button></div> }]} empty={<EmptyState title="Chưa có người nhận" />} />}</ResourceState>
       <RequestError error={task.error} />
-      <div className="server-section"><p>{selected.length} người nhận được chọn</p><Button disabled={resource.loading || !!resource.error || !selected.length || (from && to && from > to) || !!job} onClick={() => { task.setError(''); setPreview(true) }}>Kiểm tra và gửi báo cáo</Button></div>
+      <div className="server-section"><p>{selected.length} người nhận được chọn</p><Button disabled={task.busy || resource.loading || !!resource.error || !selected.length || (from && to && from > to) || !!job} onClick={() => { task.setError(''); setPreview(true) }}>Kiểm tra và gửi báo cáo</Button></div>
       {job && <JobProgress id={job} />}
     </>}
     {form && <RecipientForm path={path} row={form} onClose={() => setForm(null)} onSaved={() => { setForm(null); setJob(''); resource.reload() }} />}
+    {importing && <RecipientImport course={course} existing={recipients} onChanged={() => { resource.reload(); setJob('') }} onClose={() => setImporting(false)} />}
     {removing && <ServerConfirm title={`Xóa ${removing.email_address}?`} description="Người này sẽ không còn trong danh sách nhận báo cáo của môn." onClose={() => setRemoving(null)} onConfirm={async signal => { await api.request(`${path}/${removing.email_id}`, { method: 'DELETE', signal }); resource.reload() }} />}
     {preview && <Dialog open title="Gửi báo cáo điểm danh" onClose={() => { if (!task.busy) setPreview(false) }} footer={<><Button variant="secondary" disabled={task.busy} onClick={() => setPreview(false)}>Quay lại</Button><Button busy={task.busy} onClick={() => task.run(async signal => { const result = await api.request(`/subjects/${encodeURIComponent(course)}/send-report`, { method: 'POST', body: reportBody(from, to), signal }); if (!result.job_id) throw new Error('Server chưa trả mã tác vụ gửi báo cáo. Kiểm tra trước khi gửi lại.'); setJob(result.job_id); setPreview(false) })}>Gửi cho {selected.length} người nhận</Button></>}>
       <RequestError error={task.error} /><p>{course} · {from || 'Không giới hạn đầu'} đến {to || 'không giới hạn cuối'}</p><ul>{selected.map(row => <li key={row.email_id}>{row.email_address}</li>)}</ul><p className="ui-hint">Server tạo nội dung báo cáo và gửi qua email. Yêu cầu được đưa vào hàng đợi chưa đồng nghĩa email đã gửi xong.</p>

@@ -8,7 +8,7 @@ import { useTask } from './use-task.js'
 import { today } from './date.js'
 
 import { useServer } from './Session.jsx'
-import { useResource, useStepFocus } from './hooks.js'
+import { useAllPages, useResource, useStepFocus } from './hooks.js'
 import { queryString, unwrap } from './client.js'
 import { Pager, RequestError, ResourceState } from './common.jsx'
 import SessionContext from '../ui/SessionContext.jsx'
@@ -16,11 +16,25 @@ import SessionContext from '../ui/SessionContext.jsx'
 export function ServerAttendance({ params }) {
   const [course, setCourse] = useState(params.get('course') || ''), [date, setDate] = useState(today()), [query, setQuery] = useState(''), [search, setSearch] = useState(''), [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState(null)
-  const opener = useRef(null), workflowHash = useRef('')
+  const opener = useRef(null), workflowHash = useRef(''), restoreFocus = useRef(false), listHeading = useRef(null)
   const students = useResource(course ? `/subjects/${encodeURIComponent(course)}/students` + queryString({ q: search, limit: 25, offset }) : null)
   const subject = useResource(course ? `/subjects/${encodeURIComponent(course)}` : null)
+  const receipts = useAllPages(course && date ? '/attendance' + queryString({ subject_id: course, date }) : null, 'checkin_id')
   const subjectName = subject.data ? unwrap(subject.data, 'subject')?.subject_name : ''
-  function restoreList() { setSelected(null); requestAnimationFrame(() => { if (opener.current?.isConnected) { opener.current.focus({ preventScroll: true }); opener.current.scrollIntoView({ block: 'center' }) } }) }
+  const checked = new Map((receipts.data?.items || []).map(row => [row.student_id, row]))
+  function restoreList() { restoreFocus.current = 'waiting'; setSelected(null); receipts.reload() }
+  useEffect(() => {
+    if (!restoreFocus.current || selected) return
+    if (receipts.loading) { restoreFocus.current = 'ready'; return }
+    if (restoreFocus.current !== 'ready') return
+    // Wait for WebKit to commit visibility/history restoration before focusing.
+    const frame = requestAnimationFrame(() => {
+      restoreFocus.current = false
+      const target = opener.current?.isConnected && !opener.current.disabled ? opener.current : listHeading.current
+      target?.focus({ preventScroll: true }); target?.scrollIntoView({ block: 'center' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [selected, receipts.loading])
   useEffect(() => {
     const onPop = () => {
       if (window.location.hash !== workflowHash.current) return
@@ -37,10 +51,11 @@ export function ServerAttendance({ params }) {
     setSelected(row)
   }
   function leave() { if (window.history.state?.aegisAttendance) window.history.back(); else restoreList() }
-  return <><div className="attendance-workspace" hidden={!!selected}><PageHeader title="Điểm danh" />
+  return <><div className="attendance-workspace" hidden={!!selected}><div ref={listHeading} tabIndex={-1}><PageHeader title="Điểm danh" /></div>
     <SessionContext title={subjectName || course || 'Chọn môn học'} subtitle={course ? `${course} · ${date.split('-').reverse().join('/')}` : ''}><SubjectPicker value={course} onChange={value => { setCourse(value); setOffset(0); setSearch(''); setQuery('') }} /><Field type="date" label="Ngày điểm danh" value={date} onChange={e => setDate(e.target.value)} /></SessionContext>
     {course ? <><form className="server-search" onSubmit={e => { e.preventDefault(); setSearch(query); setOffset(0) }}><SearchField placeholder="Tìm sinh viên trong môn…" value={query} onChange={e => setQuery(e.target.value)} /><Button type="submit" variant="secondary">Tìm kiếm</Button></form>
-      <ResourceState resource={students}>{data => <><p className="attendance-count">{data.total ?? data.items?.length ?? 0} sinh viên trong môn</p><DataTable rowKey="student_id" caption="Danh sách điểm danh" variant="attendance-list attendance-roster" rows={data.items || []} columns={[{ key: 'full_name', label: 'Sinh viên', render: row => <span><strong>{row.full_name || row.student_id}</strong><small className="portal-block-muted">{row.student_id}</small></span> }, { key: 'actions', label: 'Thao tác', render: row => <Button variant="secondary" disabled={!date} onClick={event => choose(row, event)}>Điểm danh</Button> }]} empty={<EmptyState title="Chưa có sinh viên phù hợp" action={<a href={`#/app/courses/${encodeURIComponent(course)}`}>Mở danh sách ghi danh</a>} />} /><Pager total={data.total} offset={offset} onChange={setOffset} /></>}</ResourceState></> : <EmptyState title="Chọn môn để điểm danh" />}
+      <RequestError error={receipts.error} />{receipts.error && <Button variant="quiet" onClick={receipts.reload}>Tải lại lượt đã ghi nhận</Button>}
+      <ResourceState resource={students}>{data => <><p className="attendance-count">{data.total ?? data.items?.length ?? 0} sinh viên trong môn{receipts.loading ? ' · Đang tải lượt đã ghi nhận…' : receipts.data ? ` · ${checked.size} đã ghi nhận` : ''}</p><DataTable rowKey="student_id" caption="Danh sách điểm danh" variant="attendance-list attendance-roster" rows={data.items || []} columns={[{ key: 'full_name', label: 'Sinh viên', render: row => <span><strong>{row.full_name || row.student_id}</strong><small className="portal-block-muted">{row.student_id}</small></span> }, { key: 'actions', label: 'Thao tác', render: row => checked.has(row.student_id) ? <span className="attendance-receipt"><span>Đã ghi nhận<time>{checked.get(row.student_id).checkin_time || '—'}</time></span></span> : <Button variant="secondary" disabled={!date || receipts.loading || !!receipts.error} onClick={event => choose(row, event)}>Điểm danh</Button> }]} empty={<EmptyState title="Chưa có sinh viên phù hợp" action={<a href={`#/app/courses/${encodeURIComponent(course)}`}>Mở danh sách ghi danh</a>} />} /><Pager total={data.total} offset={offset} onChange={setOffset} /></>}</ResourceState></> : <EmptyState title="Chọn môn để điểm danh" />}
     </div>{selected && <AttendanceStep student={selected} course={course} date={date} onBack={leave} />}</>
 }
 function AttendanceStep({ student, course, date, onBack }) {
