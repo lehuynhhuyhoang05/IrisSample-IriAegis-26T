@@ -103,6 +103,12 @@ API xử lý một ảnh, resize BGR về 80×80 rồi suy luận MiniFASNetV2; 
 
 `main.py` nhóm 4 không bị sửa. Chớp mắt/quay đầu/flash chạy trong phần chuyển nền tảng Web, MiniVision chạy trên server. Đây là đường triển khai được chọn để có đủ luồng với source hiện có.
 
+### Khi camera qua flash nhưng báo lỗi kết nối
+
+Chế độ dữ liệu **Demo vẫn gọi dịch vụ liveness thật** khi dùng camera đầy đủ. Cần giữ cả Web, MiniVision và tunnel đang chạy; chỉ mở Web/tunnel chưa đủ. Có thể kiểm tra `http://127.0.0.1:8000/` và `http://127.0.0.1:5173/liveness-api/` (đổi 5173 theo cổng Web đang dùng): phản hồi health phải báo dịch vụ online. Qua điện thoại dùng `/liveness-api/` trên chính link HTTPS tunnel, không dùng localhost của điện thoại.
+
+Frontend hiển thị lỗi kết nối/gateway bằng tiếng Việt, giữ trạng thái chưa xác thực và không cho sử dụng ảnh. Khởi động lại dịch vụ theo hướng dẫn bên dưới nếu chưa chạy, rồi bắt đầu một phiên xác thực mới. Không hạ ngưỡng flash hoặc coi lỗi Cloudflare là kết quả FAKE. Chi tiết sự cố và kiểm tra ngày 17/11 nằm trong [báo cáo iOS](BAO-CAO-LIVENESS-IOS.md#10-lỗi-kết-nối-cloudflare-sau-bước-chụp--17112026).
+
 ### Component dùng chung
 
 ```jsx
