@@ -1,6 +1,6 @@
 # Đối chiếu chức năng Android và Web
 
-Rà soát ngày 16/11/2026 trên source hiện tại. Nguồn Android: `../IrisSample-IriAegis-26T/app/src/main/java/com/iritech/irissample/`. Nguồn Web: `src/portal` (demo cục bộ), `src/server` (client API) và `src/liveness` (camera/liveness).
+Rà soát ngày 16/11/2026, cập nhật các luồng Server ngày 17/11/2026. Nguồn Android: `../IrisSample-IriAegis-26T/app/src/main/java/com/iritech/irissample/`. Nguồn Web: `src/portal` (demo cục bộ), `src/server` (client API) và `src/liveness` (camera/liveness).
 
 ## Bổ sung UI sau rà soát
 
@@ -46,10 +46,10 @@ Không dùng “38/38 endpoint” để kết luận “100% chức năng Androi
 | Công cụ tạo điểm danh thử hàng loạt/ngẫu nhiên/xóa hôm nay, giờ tùy chọn — `MockCheckinActivity` | Đã có trang `mock-attendance`: tạo từng lượt/cả lớp, giờ tùy chọn/ngẫu nhiên, xóa hôm nay theo môn. | Chưa có UI tương đương. Đây là tiện ích thử dữ liệu, không phải nhận diện hàng loạt bằng camera. |
 | Đúng giờ/muộn/vắng; lọc theo trạng thái — `AttendanceManagementActivity.classifyCheckinStatus`, `filterAttendanceList` | Có, mốc 15 phút đã có test; vẫn còn khác biệt khi nhiều ca cùng ngày. | Báo cáo hiện hiển thị ngày/giờ và tổng có mặt/vắng; chưa có đúng giờ/muộn và bộ lọc trạng thái tương đương Android. Không cần tự tạo nhãn từ chuỗi lịch chưa được chuẩn hóa. |
 | Báo cáo ngày/lịch sử/học kỳ — `loadAttendanceRecords`, `loadSemesterAggregateRecords` | Có UI và tổng hợp local. | Có ba tab, khoảng ngày, lọc mã SV, sort, phân trang, xóa lượt; summary theo response server: `server/Reports.jsx`. |
-| Biểu đồ, thống kê từng sinh viên và cảnh báo vắng — `calculateAndShowChart`, `showStudentStatsDialog`, `AttendanceRecordAdapter` | Có biểu đồ thanh/dialog/cảnh báo local. | **Chưa có biểu đồ, dialog thống kê cá nhân và cảnh báo tương đương.** Một phần có thể dựng từ summary/checkins hiện có; không quy toàn bộ thiếu sót này cho backend. |
-| Xuất CSV báo cáo ngày/học kỳ — `showExportModeDialog`, `writeDayModeCsv`, `writeSemesterModeCsv` | Có xuất dữ liệu đang lọc. | Có xuất **trang đang xem**, chưa xuất toàn bộ các trang/đầy đủ các cột báo cáo Android. Có thể dùng API phân trang để xây thêm. |
-| Quản lý/chọn người nhận báo cáo — `setupEmailComponent` | Có CRUD, chọn từng người/chọn tất cả. | Có CRUD và sửa `is_selected`; chưa có thao tác chọn tất cả tương đương. |
-| Nhập CSV người nhận — `importEmailsFromCsv` | Có. | **Chưa có UI nhập CSV người nhận.** `/import/csv` chỉ mô tả students/subjects/admin. Có thể đề xuất xử lý CSV FE rồi gọi POST recipient từng dòng, nhưng cần thiết kế lỗi từng phần/trùng trước khi coi là đã hoàn thành. |
+| Biểu đồ, thống kê từng sinh viên và cảnh báo vắng — `calculateAndShowChart`, `showStudentStatsDialog`, `AttendanceRecordAdapter` | Có tổng hợp/dialog/cảnh báo local; giao diện hiện dùng nhãn/số theo quy chuẩn, không có bar màu. | Có tổng số từ summary và dialog thống kê cá nhân với lịch sử phân trang, theo môn/khoảng ngày. Chưa có cảnh báo theo ngưỡng vắng tương đương; không tự đặt ngưỡng ở FE. |
+| Xuất CSV báo cáo ngày/học kỳ — `showExportModeDialog`, `writeDayModeCsv`, `writeSemesterModeCsv` | Có xuất dữ liệu đang lọc. | Có xuất trang hiện tại, toàn bộ kết quả lọc qua phân trang và toàn bộ summary server trả. Có tiến độ/hủy, chặn file thiếu khi lỗi/trùng trang. Chỉ xuất các trường API cung cấp, chưa đủ cột nghiệp vụ Android nếu API chưa có. |
+| Quản lý/chọn người nhận báo cáo — `setupEmailComponent` | Có CRUD, chọn từng người/chọn tất cả. | Có CRUD, checkbox từng người và chọn tất cả, lưu `is_selected` bằng PUT; tải lại kết quả khi thành công một phần. |
+| Nhập CSV người nhận — `importEmailsFromCsv` | Có. | Đã có xem trước CSV, kiểm tra cột/email/giá trị chọn, bỏ qua email đã có/trùng trong file. FE gọi POST recipient từng dòng; phản hồi 409 bỏ qua, lỗi mạng/5xx dừng và cho thử lại phần chưa xác nhận. Không thêm loại CSV mới vào `/import/csv`. |
 | Gửi báo cáo theo phạm vi đã chọn — `AttendanceManagementActivity`, `EmailService` | Gửi giả lập; nhận bộ lọc và loại báo cáo từ Reports, cùng hàm xuất CSV cho bản đính kèm. | Có giữ khoảng ngày từ Reports sang Email, POST send-report và theo dõi job. Nội dung/file báo cáo thật do server tạo, chưa kiểm chứng email nhận thực tế. |
 | Email thông báo tạo/sửa/xóa tài khoản — `EmailService` và các Activity quản trị | Chưa có gửi thật. | Không có API gửi từng loại thông báo này; cần kiểm tra side effect backend. Có form CRUD không đồng nghĩa email đã gửi. |
 | Backup/restore database + ảnh mã hóa — `BackupRestoreActivity`, `BackupRestoreHelper`, `EncryptionHelper` | Có JSON cũ và tùy chọn mã hóa file Web bằng mật khẩu, backup trong phiên, tải/nhập/xóa/restore. Không đọc định dạng backup Android. | Chưa có API/UI vận hành backup server. Android xem tất cả backup cũng còn TODO; không tính TODO là chức năng Android đã chạy. |
@@ -72,8 +72,8 @@ REAL cho phép sử dụng ảnh sau khi đủ luồng; FAKE/lỗi không cho s�
 
 ## 5. Việc còn lại khi chuyển bản UI cục bộ sang vận hành thật
 
-1. Hoàn thiện các thiếu sót FE độc lập: biểu đồ/thống kê cá nhân/cảnh báo, xuất toàn bộ dữ liệu đã lọc, tiện ích dữ liệu thử nếu giữ phạm vi MockCheckin.
-2. Chốt UI thay thế/phần chờ cho nhập CSV người nhận, chọn tất cả, kiosk và lần đăng nhập đầu.
+1. Đã bổ sung thống kê cá nhân, xuất toàn bộ kết quả lọc, chọn tất cả và CSV người nhận trong Server. Giữ trình bày nhãn/số, không thêm biểu đồ thanh màu theo quy chuẩn UI. Cảnh báo vắng theo ngưỡng và công cụ tạo dữ liệu thử Server chưa được bổ sung.
+2. Chốt UI/phần chờ cho kiosk mã/mật khẩu và hoàn thiện hồ sơ lần đầu; không dùng dữ liệu Demo thay phản hồi Server.
 3. Nhóm 1 bổ sung/chốt hợp đồng quản trị Admin/hồ sơ/ảnh, face verification/chống trùng, kiểm tra mật khẩu điểm danh và ràng buộc liveness.
 4. Chốt định nghĩa lịch/ca, trạng thái điểm danh, trùng lượt, xóa mềm và side effect email.
 5. Xác định phương án backup/restore, xác thực thao tác nhạy cảm; ghi rõ Iris bị hoãn nếu thiếu SDK/thiết bị.
@@ -86,5 +86,13 @@ REAL cho phép sử dụng ảnh sau khi đủ luồng; FAKE/lỗi không cho s�
 - Playwright `portal.spec.js` và `android-completion.spec.js`: 32/32 đạt trên Chrome desktop/mobile. Năm bài mới còn chạy trên WebKit mô phỏng iPhone và đều đạt. Đã chụp và xem màn mới ở 390/768/1440px, kiểm tra thêm 360px; WebKit không thay thế Safari iPhone thật.
 - Playwright `server.spec.js` và `server-contract.spec.js`: 16/16 đạt trên desktop Chrome và mobile Chrome mô phỏng. Bài contract phát sinh đủ 38 operation từ UI, kiểm tra payload/response có schema bằng YAML.
 - Chưa dùng đợt kiểm tra này để xác nhận backend nhóm 1 thật, email/Redis thật, tính đúng của model hay Safari iPhone thật.
+
+### Kiểm tra bổ sung ngày 17/11/2026
+
+- Chốt Demo tại `3b429f9`: 64 ca Chrome desktop/mobile và 32 ca WebKit cho điều hướng, nghiệp vụ cục bộ, mobile, motion và giữ ngữ cảnh; lint, 60 kiểm thử Node và build đạt tại mốc đó.
+- Sau bổ sung Server: lint, 65 kiểm thử Node và build đạt; 28/28 ca Chrome desktop/mobile, 14/14 ca WebKit trong `server.spec.js`, `server-contract.spec.js`, `server-workflows.spec.js` đạt. Bài contract vẫn chạm đủ 38 operation và không phát hiện payload/response có schema sai.
+- Các ca mới kiểm tra receipt vượt một trang, quay lại danh sách sau ghi nhận, CSV 128 bản ghi, lỗi/hủy xuất không tải file thiếu, thống kê cá nhân, giữ bộ lọc báo cáo/email, cập nhật người nhận lỗi một phần và CSV thử lại không nhập lại dòng đã thành công.
+- Kiểm tra thêm 21 ca camera/liveness trên WebKit đạt trong lượt hồi quy; dùng frame/phản hồi kiểm thử, không đánh giá phần cứng/model thật. Lỗi focus sau tải lại danh sách trên WebKit đã sửa và kiểm tra lặp lại 3 lần.
+- Đã xem ảnh email, CSV và thống kê ở 390px; kiểm tra bố cục thêm 360/768/1440px. Backend thật, email thật và độ ổn định liveness trên iPhone vật lý chưa được xác nhận ở đợt này.
 
 Ma trận endpoint chi tiết: [DOI-CHIEU-API-SERVER.md](DOI-CHIEU-API-SERVER.md).

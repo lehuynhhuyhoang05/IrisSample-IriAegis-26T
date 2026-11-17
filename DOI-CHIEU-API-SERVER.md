@@ -1,6 +1,6 @@
 # Đối chiếu Web với API nhóm 1
 
-Ngày kiểm tra lại: **16/11/2026**. Nguồn chính: `openapi.yml` trong repository. Phạm vi: chế độ **Server** của Web, không dùng các thao tác mock làm bằng chứng kết nối API.
+Ngày cập nhật: **17/11/2026**. Nguồn chính: `openapi.yml` trong repository. Phạm vi: chế độ **Server** của Web, không dùng các thao tác mock làm bằng chứng kết nối API.
 
 ## 1. Kết quả
 
@@ -12,7 +12,7 @@ Ngày kiểm tra lại: **16/11/2026**. Nguồn chính: `openapi.yml` trong repo
 - **Chưa xác nhận backend thật:** kiểm tra hợp đồng dùng response giả lập theo YAML. Endpoint ghi `planned` vẫn phụ thuộc nhóm 1 triển khai.
 - Tính theo định nghĩa đầu của mỗi operation Web: **6 implemented, 28 planned, 4 không ghi x-status**. Đây là nhãn trong file, không phải kết quả kiểm tra server đang triển khai thực tế.
 
-**38/38 operation không đồng nghĩa đầy đủ chức năng Android.** Còn thiếu ở chế độ server: đối sánh danh tính/chống trùng mặt, sửa/xóa và ảnh Admin, cập nhật hồ sơ, bootstrap đầu tiên, kiosk mã/mật khẩu, backup tương đương Android. Các phần FE chưa hoàn thiện còn có biểu đồ/thống kê cá nhân/cảnh báo, xuất toàn bộ kết quả phân trang, CSV người nhận và công cụ MockCheckin. Chi tiết bằng chứng và phân loại ở [DOI-CHIEU-ANDROID-WEB.md](DOI-CHIEU-ANDROID-WEB.md).
+**38/38 operation không đồng nghĩa đầy đủ chức năng Android.** Còn thiếu ở chế độ server: đối sánh danh tính/chống trùng mặt, sửa/xóa và ảnh Admin, cập nhật hồ sơ, bootstrap đầu tiên, kiosk mã/mật khẩu và backup tương đương Android. UI không tự tạo các quy tắc cảnh báo vắng hoặc công cụ sinh dữ liệu MockCheckin trên server. Thống kê cá nhân, xuất toàn bộ kết quả phân trang, chọn tất cả và CSV người nhận đã được bổ sung phía FE. Chi tiết bằng chứng và phân loại ở [DOI-CHIEU-ANDROID-WEB.md](DOI-CHIEU-ANDROID-WEB.md).
 
 Không thể gọi toàn bộ YAML là một hợp đồng đã thống nhất hoàn toàn: file có path trùng và các định nghĩa khác nhau. Các điểm này được liệt kê ở mục 5; giữ nguyên file nhóm 1 gửi.
 
@@ -34,6 +34,19 @@ Không thể gọi toàn bộ YAML là một hợp đồng đã thống nhất h
 | Upload PNG luôn mang tên `.jpg` | Tên file theo đúng MIME JPEG/PNG; GET ảnh kiểm tra MIME trước khi hiển thị. |
 | Điểm danh gửi metadata ngoài phần chung của hai định nghĩa; đòi response có ID dù schema không bắt | Payload giữ sinh viên/môn/ngày/giờ/UUID; xác nhận response đúng sinh viên/môn. Không đòi trường tùy chọn phải luôn có. |
 | FE tự chặn ngày tương lai trong chế độ server dù YAML chưa có quy tắc này | Bỏ quy tắc riêng đó; gửi ngày hợp lệ về server để backend quyết định chính sách nghiệp vụ. |
+
+### Bổ sung luồng FE ngày 17/11/2026
+
+| Luồng | Cách dùng hợp đồng hiện có |
+|---|---|
+| Lượt đã điểm danh trên danh sách lớp | Đọc `GET /attendance` theo môn/ngày qua `limit=100` và `offset`, không chỉ lấy trang đầu. Sau ghi nhận đọc lại; lỗi tải không giả thành danh sách chưa ai điểm danh. |
+| Xuất toàn bộ báo cáo | Đọc đủ trang `/attendance` hoặc `/checkins`, giữ bộ lọc và sort. Từ chối file khi trang lỗi, tổng thay đổi hoặc trả lặp ID; cho phép hủy. Đây không phải snapshot giao dịch của server. |
+| Thống kê từng sinh viên | Dialog đọc `/checkins` với mã SV/môn/khoảng ngày và `/subjects/{subject_id}/attendance-summary`. Tỷ lệ là số server trả trong khoảng 0–1, UI đổi sang phần trăm. Không tự tính ngưỡng cảnh báo hoặc vắng từ lịch local. |
+| Chọn người nhận email | Gọi PUT người nhận với `is_selected`; chọn tất cả chỉ cập nhật những dòng thay đổi. Khi lỗi một phần, tải lại dữ liệu server và hiển thị số đã xử lý. |
+| Nhập CSV người nhận | CSV tối đa 1 MB/500 dòng, kiểm tra toàn file trước khi gửi. Chỉ lấy `email_address`, `recipient_name`, `is_selected`, xem trước và gọi POST từng email mới. Email đã có/trùng trong file được bỏ qua; 409 do trùng trên server cũng được ghi nhận. Lỗi mạng/5xx dừng nhập, giữ kết quả từng dòng để thử lại, không rollback hoặc báo tất cả thành công. |
+| Quay về báo cáo từ email | Giữ môn, ngày, tab, khoảng ngày, mã sinh viên và sort trong đường dẫn nội bộ. Không thêm query vào request API ngoài đặc tả. |
+
+Không bổ sung hoặc sửa endpoint, schema, model hoặc source backend trong đợt này. Các request mới đều dùng các operation đã có; `openapi.yml` vẫn giữ nguyên các điểm cần Nhóm 1 xác nhận.
 
 ## 3. Ma trận toàn bộ operation Web
 
@@ -144,6 +157,8 @@ Chế độ này đổi tên trường auth, giới hạn tạo tài khoản ADM
 - `tests/ui/server-contract.spec.js` đi qua đủ **38/38** operation bằng thao tác giao diện, gồm đăng nhập bằng mã, refresh, quyền tạo Admin, CRUD/ghi danh, ảnh, lịch sử/tổng hợp, email, ba loại CSV và đăng xuất. Kết quả đính kèm `api-coverage.json` có `missing: []`, `violations: []`.
 - Kiểm tra lại ngày 16/11/2026: **54/54 kiểm thử Node**, **16/16 bài `server.spec.js` và `server-contract.spec.js` trên Chrome desktop/mobile** đạt. Bài contract phát sinh đủ 38 operation. Những kết quả WebKit của đợt trước không được tính là lần kiểm tra lại này.
 - Đã xem ảnh form tài khoản và tab lịch sử ở 390 px. WebKit là mô phỏng, không phải xác nhận Safari trên iPhone thật.
+
+Cập nhật ngày 17/11/2026: lint, 65 kiểm thử Node và build đạt; bộ Server gồm `server.spec.js`, `server-contract.spec.js`, `server-workflows.spec.js` đạt **28/28 trên Chrome desktop/mobile** và **14/14 trên WebKit**. Kiểm tra mới bao gồm tải receipt nhiều trang, xuất đủ 128 bản ghi, lỗi/hủy xuất không tạo file, thống kê cá nhân, bộ lọc quay lại, chọn email lỗi một phần và nhập CSV thử lại. Đã xem ảnh ở 390px, kiểm tra bố cục 360/768/1440px. Đây vẫn là kiểm thử FE với fixture, không đổi trạng thái xác nhận backend thật ở trên.
 
 Các kiểm tra trên xác nhận cấu trúc và luồng phía frontend theo phần đặc tả được chọn; chưa kiểm tra HTTP/DB/Redis/email thật của nhóm 1 trong đợt này. Phân quyền thực tế vẫn do backend thực thi, không chỉ dựa vào việc ẩn nút trên UI.
 

@@ -1,5 +1,7 @@
 # IriAegis Web — Giao diện và prototype nghiệp vụ
 
+**Nhánh phát triển chính: `HuyHoang`.** Tiếp tục phát triển và kiểm thử tại đây; đợt cập nhật này không thay đổi nhánh `main`.
+
 **Liveness nhóm 4:** [LIVENESS.md](LIVENESS.md). Đã chuyển luồng Android sang Web: chớp mắt → quay hai phía → đo flash đỏ/xanh → API MiniVision. Thử tại `/#/camera` hoặc bước điểm danh. Backend nhóm 4 chạy cổng 8000, proxy `/liveness-api`. Cần thử camera/iPhone thật để xác nhận chất lượng; chưa có đối sánh danh tính hoặc bằng chứng do server nhóm 1 xác minh.
 
 **Tình huống iPhone người thật không đạt flash:** [báo cáo và hướng thu số đo](BAO-CAO-LIVENESS-IOS.md). Hiện chưa xác nhận khắc phục trên thiết bị thật. Khi lỗi sau bước ánh sáng, bấm **Lưu thông tin lỗi** để tải `iriaegis-camera-support.json`, kể cả không bật debug. File chứa số đo của tối đa 5 lượt đo ánh sáng gần nhất trong trang, gồm cả lượt đạt/không đạt; không chứa ảnh, video, tài khoản hoặc token. Không tải lại trang giữa các lượt nếu cần đối chiếu. Công thức/ngưỡng nhóm 4 không bị nới để cho qua.
@@ -13,6 +15,17 @@ Tham khảo [đối chiếu chức năng Android → Web](DOI-CHIEU-ANDROID-WEB.
 Trang `/` hoặc `/#/app` mặc định mở đăng nhập server. Dùng tài khoản nhóm 1 cấp. Hướng dẫn cấu hình, kết quả rà soát UX, endpoint đã nối và các lệch giữa YAML/source: [DANH-GIA-UX-VA-TICH-HOP-SERVER.md](DANH-GIA-UX-VA-TICH-HOP-SERVER.md).
 
 Trình duyệt gọi `/api/v1` qua proxy Vite; đích mặc định `http://localhost:5000` lấy từ YAML. Có thể tạo `.env.local` từ `.env.example`, đổi `API_PROXY_TARGET` rồi khởi động lại Vite. Trên điện thoại/tunnel nên giữ API cùng origin. Đặc tả nhóm 1 có endpoint planned, chưa có đối sánh mặt hoặc liên kết bằng chứng liveness vào check-in; liveness chạy qua API riêng nhóm 4. Web không tự chuyển thành kết quả giả lập khi server lỗi. Chưa xác nhận hoạt động với backend nhóm 1 thật đang chạy.
+
+Không cần cài/chạy backend để phát triển UI và chạy kiểm thử trình duyệt với fixture theo YAML. Để tự thao tác **chế độ Server với dữ liệu thật**, cần backend đang chạy (trên máy này hoặc một URL do Nhóm 1 cung cấp), tài khoản hợp lệ và các endpoint tương ứng đã triển khai. Các thao tác camera/liveness vẫn cần dịch vụ liveness riêng; không cần dịch vụ đó để kiểm thử CRUD bằng fixture.
+
+### Bổ sung giao diện Server ngày 17/11/2026
+
+- Danh sách điểm danh đọc đủ các trang lượt đã ghi nhận theo môn/ngày, hiển thị giờ và tải lại sau thao tác; quay lại giữ vị trí/focus. API check-in vẫn là ghi nhận thủ công, chưa xác thực danh tính bằng mặt.
+- Báo cáo có thống kê từng sinh viên, lịch sử phân trang, xuất trang hiện tại hoặc toàn bộ kết quả lọc. Xuất toàn bộ có thể hủy; lỗi giữa các trang không tạo file thiếu dữ liệu.
+- Email có chọn từng người/chọn tất cả, nhập CSV với xem trước, bỏ qua email trùng và thử lại các dòng chưa nhập. CSV được FE xử lý rồi gọi API người nhận từng dòng; không thêm endpoint nhập hàng loạt.
+- Đi từ báo cáo sang email và quay lại giữ bộ lọc. Ngày hiển thị dạng `dd/mm/yyyy`; request/CSV giữ định dạng ISO theo hợp đồng.
+
+Demo đã được kiểm tra và lưu tại commit `3b429f9`. Bản Server tiếp tục tách dữ liệu, xác thực và kết quả khỏi Demo. Các giới hạn chưa có API được ghi ở [bảng đối chiếu](DOI-CHIEU-ANDROID-WEB.md).
 
 ## Dữ liệu nghiệp vụ
 
