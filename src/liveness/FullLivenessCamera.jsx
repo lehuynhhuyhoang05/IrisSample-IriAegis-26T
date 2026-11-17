@@ -7,7 +7,9 @@ import { getLivenessCrop } from './face-crop.js'
 import { predictLiveness } from './client.js'
 import { LivenessStateMachine } from './liveness-state-machine.js'
 import { EyeCalibration, LANDMARK_MODEL, readLandmarks } from './landmark-input.js'
-import { FlashSampler, lockCamera, sampleFaceCore } from './flash-challenge.js'
+import { FLASH_LIMITS, FlashSampler, lockCamera, sampleFaceCore } from './flash-challenge.js'
+import FaceGuide from './FaceGuide.jsx'
+import { isFaceInsideGuide } from './face-guide.js'
 import logo from '../assets/android/ic_app_logo.png'
 import { cameraDiagnosticsEnabled } from '../ui/development.js'
 import { cameraMeasurementContext, downloadFlashSupport, rememberFlashCheck } from './support-report.js'
@@ -24,6 +26,7 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
   const [flashColor, setFlashColor] = useState('off'), [metrics, setMetrics] = useState(null), [cameraLock, setCameraLock] = useState(null)
   const [showDetails, setShowDetails] = useState(false), [consent, setConsent] = useState(false)
   const [faces, setFaces] = useState([])
+  const [insideGuide, setInsideGuide] = useState(false)
   const [flashReport, setFlashReport] = useState(null)
   function downloadMeasurement() {
     if (!flashReport) return
@@ -55,7 +58,7 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
     rt.model?.close(); rt.model = null
     rt.logic = null; rt.flash = null; rt.busyFlash = false
     if (videoRef.current) videoRef.current.srcObject = null
-    setFlashColor('off'); setFaces([])
+    setFlashColor('off'); setFaces([]); setInsideGuide(false)
   }, [])
   const fail = useCallback(message => {
     releaseResources()
@@ -68,9 +71,10 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
     const first = requestAnimationFrame(() => {
       const second = requestAnimationFrame(() => {
         if (epoch === rt.epoch) {
-          const overlay = document.querySelector('.liveness-screen-flash')
+          const overlay = videoRef.current?.parentElement?.querySelector('[data-flash-phase]')
           const bounds = overlay?.getBoundingClientRect()
-          const display = bounds ? { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height, color: getComputedStyle(overlay).backgroundColor } : undefined
+          const surface = overlay?.querySelector('[data-flash-surface]')
+          const display = bounds ? { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height, color: surface ? getComputedStyle(surface).fill : '', shape: 'face-contour-perimeter' } : undefined
           rt.flash?.present(flashColor, performance.now(), videoRef.current?.currentTime ?? 0, display)
         }
       })
@@ -225,6 +229,8 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
           } else {
             const landmarks = rt.model.detectForVideo(canvas, performance.now())
             sample = { ...readLandmarks(landmarks, video, canvas), timestamp: mediaTime }
+            sample.inGuide = sample.count === 1 && isFaceInsideGuide(sample.faces[0]?.boundingBox, video.videoWidth, video.videoHeight, video.clientWidth, video.clientHeight, rt.logic.state !== 'waiting')
+            sample.inFrame = sample.inFrame && sample.inGuide
             if (sample.count === 1 && sample.inFrame) sample = { ...sample, ...rt.eyes.measure(sample, now) }
             rt.lastSample = sample
           }
@@ -236,7 +242,7 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
             frameSource: rt.frameSource, processingMs: rt.processingMs }
           if (snapshot.state === 'failed') { setMetrics(diagnostic); fail(snapshot.message); return }
           setStatus(snapshot)
-          if (now - rt.lastUI >= 200) { setMetrics(diagnostic); setFaces(sample.faces || []); rt.lastUI = now }
+          if (now - rt.lastUI >= 200) { setMetrics(diagnostic); setFaces(sample.faces || []); setInsideGuide(!!sample.inGuide); rt.lastUI = now }
           if (snapshot.state === 'flash' && !rt.busyFlash) beginFlash().catch(failure => { if (epoch === rt.epoch) fail(failure.message) })
           if (rt.flash) {
             const phase = rt.flash.phase(now)
@@ -322,11 +328,11 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
           <video ref={videoRef} autoPlay muted playsInline disablePictureInPicture className={hasCamera ? 'visible' : ''} />
           {photo && <img src={photo} alt="Ảnh sau kiểm tra liveness" />}
           {!hasCamera && !photo && <div className="camera-placeholder"><Camera size={32} aria-hidden="true" /></div>}
-          {!photo && <div className={'face-guide' + (faces.length === 1 ? ' detected' : '')} aria-hidden="true" />}
+          {!photo && <FaceGuide color={flashColor} valid={insideGuide} failed={status.state === 'failed'} />}
           {diagnostics && showDetails && hasCamera && <div className="face-detection-overlay" aria-hidden="true">{faces.map((face, index) => <div className="face-detection-box" key={index} style={{ left: `${face.preview.left}%`, top: `${face.preview.top}%`, width: `${face.preview.width}%`, height: `${face.preview.height}%` }}><span>{index + 1}</span></div>)}</div>}
         </div>
         <div className="card-bottom"><div className="detect-status" role="status" aria-live="polite"><strong>{message}</strong></div>
-          {!running && !photo && <label className="full-liveness-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />Tôi đồng ý dùng ánh sáng đỏ/xanh và gửi ảnh để xác thực.</label>}
+          {!running && !photo && <><p className="liveness-brightness-hint">Tăng độ sáng màn hình trước khi xác thực.</p><label className="full-liveness-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />Tôi đồng ý dùng ánh sáng đỏ/xanh và gửi ảnh để xác thực.</label></>}
           <div className="actions">{running ? <button type="button" className="btn secondary" onClick={() => { releaseResources(); setStatus({ state: 'idle', message: 'Đã hủy xác thực' }); setPhoto(null); setResult(null); setError('') }}>Hủy xác thực</button> : <button type="button" className={'btn ' + (status.state === 'real' && onCapture ? 'secondary' : 'primary')} disabled={!consent} onClick={start}>{status.state === 'idle' ? <Camera size={18}/> : <RefreshCcw size={18}/>} {status.state === 'idle' ? 'Bắt đầu xác thực' : 'Xác thực lại'}</button>}</div>
         </div>
         {error && <p className="error" role="alert">{errorMessage}</p>}
@@ -340,13 +346,13 @@ export default function FullLivenessCamera({ embedded = false, onCapture }) {
           {metrics && <p>Xử lý: {metrics.delegate}{metrics.restartReason ? ` · Bắt đầu lại: ${metrics.restartReason}` : ''}</p>}
           {metrics?.frameSource && <p>Nguồn frame: {metrics.frameSource} · Suy luận: {Math.round(metrics.processingMs)} ms</p>}
           {metrics?.cameraState && <p>Camera: {metrics.cameraState}</p>}
-          {flashReport && <p>Flash: shift {flashReport.shift?.toFixed(3) ?? '—'} / 0.280 · normR {flashReport.normRed?.toFixed(3) ?? '—'} / 0.040 · normB {flashReport.normBlue?.toFixed(3) ?? '—'} / 0.040 · Baseline đối xứng: {flashReport.symmetric === undefined ? '—' : flashReport.symmetric ? 'đạt' : 'không đạt'} · Mẫu nền/đỏ/xanh: {flashReport.counts.baseline}/{flashReport.counts.red}/{flashReport.counts.blue}</p>}
+          {flashReport && <p>Flash: shift {flashReport.shift?.toFixed(3) ?? '—'} / {FLASH_LIMITS.shift.toFixed(3)} · normR {flashReport.normRed?.toFixed(3) ?? '—'} / {FLASH_LIMITS.normRed.toFixed(3)} · normB {flashReport.normBlue?.toFixed(3) ?? '—'} / {FLASH_LIMITS.normBlue.toFixed(3)} · Mẫu nền/đỏ/xanh: {flashReport.counts.baseline}/{flashReport.counts.red}/{flashReport.counts.blue}</p>}
           {flashReport && <button type="button" className="btn secondary" onClick={downloadMeasurement}>Tải số đo ánh sáng (.json)</button>}
           {result && <p>MiniVision: {result.result} · REAL {result.real_score} · Ngưỡng {result.threshold_used} · Flash shift {result.web_liveness.flash.shift.toFixed(3)}</p>}
         </details>}
         {diagnostics && !embedded && <a className="passive-test-link" href="#/camera/passive">Thử riêng API phân loại ảnh</a>}
       </section>
     </Container>
-    {['red', 'blue'].includes(flashColor) && <><div className={'liveness-screen-flash ' + flashColor} data-flash-phase={flashColor} aria-hidden="true" /><button type="button" className="liveness-flash-stop" onClick={() => fail('Đã dừng kiểm tra ánh sáng. Bạn có thể thử lại.')}>Dừng kiểm tra ánh sáng</button></>}
+    {['red', 'blue'].includes(flashColor) && <button type="button" className="liveness-flash-stop" onClick={() => fail('Đã dừng kiểm tra ánh sáng. Bạn có thể thử lại.')}>Dừng kiểm tra ánh sáng</button>}
   </div>
 }

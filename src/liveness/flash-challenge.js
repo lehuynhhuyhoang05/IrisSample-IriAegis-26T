@@ -1,11 +1,13 @@
-// FaceCaptureActivity.java: evaluateRedBlueRatioCycle(), core inset .22,
+// FaceCaptureActivity.java @ a9be597ba66f99d9f117871ef17d9da234780c81:
+// evaluateRedBlueRatioCycle(), perimeter flash, core inset .22,
 // baseline 150 ms → RED 500 ms → BLUE 500 ms → recovery 220 ms.
 export const FLASH_TIMING = Object.freeze({ baseline: 150, settle: 150, color: 500, recovery: 220 })
-export const FLASH_LIMITS = Object.freeze({ shift: .280, normRed: .040, normBlue: .040 })
-export function checkFlashMetrics({ shift, normRed, normBlue, symmetric }) {
+export const FLASH_LIMITS = Object.freeze({ shift: .018, normRed: .002, normBlue: .002 })
+export const FLASH_PROFILE = Object.freeze({ sourceRevision: 'a9be597ba66f99d9f117871ef17d9da234780c81', stimulus: 'face-contour-perimeter', maxLuma: 240, requiresBaselineSymmetry: false })
+export function checkFlashMetrics({ shift, normRed, normBlue }) {
   const values = { shift, normRed, normBlue }
   const failedChecks = Object.entries(FLASH_LIMITS).filter(([key, minimum]) => !Number.isFinite(values[key]) || values[key] < minimum).map(([key]) => key)
-  if (symmetric !== true) failedChecks.push('baseline')
+  if (!(shift > 0)) failedChecks.push('colorOrder')
   return { passed: failedChecks.length === 0, failedChecks }
 }
 export function evaluateFlash(samples) {
@@ -14,15 +16,17 @@ export function evaluateFlash(samples) {
   const valid = row => row?.count > 0 && ['r', 'g', 'b'].every(k => Number.isFinite(row[k]) && row[k] >= 0 && row[k] <= 255)
   if (![baseline, red, blue].every(valid)) return { ...details, passed: false, reason: 'Không đủ mẫu ánh sáng trên khuôn mặt. Hãy thử lại.' }
   const luma = x => .299 * x.r + .587 * x.g + .114 * x.b
-  if (luma(red) > 215 && luma(blue) > 215) return { ...details, passed: false, reason: 'Vùng mặt quá chói để kiểm tra phản xạ.' }
+  if (luma(red) > FLASH_PROFILE.maxLuma && luma(blue) > FLASH_PROFILE.maxLuma) return { ...details, passed: false, reason: 'Vùng mặt quá chói để kiểm tra phản xạ.' }
   const ratio = x => x.r / (x.b + 1)
   const sum = x => x.r + x.g + x.b + .001
   const shift = ratio(red) - ratio(blue)
   const normRed = red.r / sum(red) - blue.r / sum(blue)
   const normBlue = blue.b / sum(blue) - red.b / sum(red)
   const symmetric = ratio(red) > ratio(baseline) + .035 && ratio(blue) < ratio(baseline) - .035
-  const { passed, failedChecks } = checkFlashMetrics({ shift, normRed, normBlue, symmetric })
-  const names = { shift: 'biến thiên đỏ/xanh', normRed: 'phản xạ đỏ', normBlue: 'phản xạ xanh', baseline: 'đối xứng với nền' }
+  // The new upstream no longer gates on baseline symmetry. Retain it only as
+  // telemetry so old and new measurements can be compared with their profile.
+  const { passed, failedChecks } = checkFlashMetrics({ shift, normRed, normBlue })
+  const names = { shift: 'biến thiên đỏ/xanh', normRed: 'phản xạ đỏ', normBlue: 'phản xạ xanh', colorOrder: 'thứ tự phản xạ đỏ/xanh' }
   return { ...details, passed, failedChecks, shift, normRed, normBlue, symmetric, reason: passed ? '' : `Phản xạ đỏ/xanh không đạt. Chưa đạt: ${failedChecks.map(key => names[key]).join(', ')}. Chưa xác nhận liveness; đây chưa phải kết quả FAKE từ MiniVision.` }
 }
 
@@ -78,7 +82,7 @@ export class FlashSampler {
     this.trace = this.trace.slice(-128)
   }
   result() {
-    const report = { ...evaluateFlash(this.samples), trace: [...this.trace], presentations: [...this.presentations], skipped: { ...this.skipped }, timing: FLASH_TIMING, limits: FLASH_LIMITS }
+    const report = { ...evaluateFlash(this.samples), trace: [...this.trace], presentations: [...this.presentations], skipped: { ...this.skipped }, timing: FLASH_TIMING, limits: FLASH_LIMITS, profile: FLASH_PROFILE }
     if (this.failure || !this.complete) return { ...report, passed: false, reason: this.failure || 'Chưa hoàn thành các pha ánh sáng.' }
     return report
   }
