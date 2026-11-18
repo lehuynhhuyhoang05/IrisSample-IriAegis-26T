@@ -8,6 +8,8 @@
 
 **Đối chiếu API mới nhất:** [DOI-CHIEU-API-SERVER.md](DOI-CHIEU-API-SERVER.md) — ma trận 38 operation Web, các phần thiếu đã bổ sung, giới hạn và mâu thuẫn trong YAML. Chạy `npm.cmd run audit:api` để xem ma trận.
 
+**Gửi Nhóm 1 trước khi kết nối thật:** [TRAO-DOI-TICH-HOP-API-NHOM-1.md](TRAO-DOI-TICH-HOP-API-NHOM-1.md) — môi trường, tài khoản/dữ liệu test, hợp đồng cần chốt và thứ tự kiểm thử tích hợp.
+
 Tham khảo [đối chiếu chức năng Android → Web](DOI-CHIEU-ANDROID-WEB.md) và quy chuẩn giao diện [DESIGN.md](DESIGN.md). Bảng đối chiếu được lập khi còn bản demo; cần xác nhận lại trạng thái từng chức năng với API hiện có.
 
 ## Bản nâng cấp kết nối API nhóm 1
